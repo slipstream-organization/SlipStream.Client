@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-f1-red: #e10600;
+  --color-f1-dark: #15151e;
+  --color-f1-carbon: #333338;
+  --color-f1-light: #f3f3f3;
+
+  --color-team-redbull: #3671C6;
+  --color-team-mercedes: #27F4D2;
+  --color-team-ferrari: #E80020;
+  --color-team-mclaren: #FF8000;
+  --color-team-aston: #229971;
+  --color-team-alpine: #0093cc;
+  --color-team-williams: #64C4FF;
+  --color-team-vcarb: #6692FF;
+  --color-team-sauber: #52E252;
+  --color-team-haas: #B6BABD;
+
+  --font-sport: "Titillium Web", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Theme tokens — switch with the `.dark` class on <html> */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+}
+
+:root {
+  --c-bg: #f2f2f4;
+  --c-surface: #ffffff;
+  --c-surface-2: #e9e9ee;
+  --c-ink: #15151e;
+  --c-muted: #6b6b76;
+  --c-line: rgba(21, 21, 30, 0.1);
+  color-scheme: light;
+}
+
+.dark {
+  --c-bg: #0b0b0f;
+  --c-surface: #15151e;
+  --c-surface-2: #1f1f2a;
+  --c-ink: #ffffff;
+  --c-muted: #9b9ba8;
+  --c-line: rgba(255, 255, 255, 0.08);
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--font-sport);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Circular reveal when switching theme (View Transitions API) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--c-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: #9b9ba8;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #e10600;
+}
+
+@utility display {
+  font-family: var(--font-sport);
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
+}
+
+@utility card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: 14px;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(225, 6, 0, 0.6); }
+  100% { box-shadow: 0 0 0 10px rgba(225, 6, 0, 0); }
+}
+.pulse-dot {
+  animation: pulse-ring 1.4s ease-out infinite;
+}
+
+/* Diagonal speed stripes used as decoration */
+.speed-stripes {
+  background-image: repeating-linear-gradient(
+    -60deg,
+    transparent 0 10px,
+    rgba(225, 6, 0, 0.9) 10px 14px
+  );
+}
