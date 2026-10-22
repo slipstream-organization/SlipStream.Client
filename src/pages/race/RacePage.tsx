@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowLeft, Box, Clapperboard, Film, Play, Radio, Target, Timer, Zap } from 'lucide-react';
+import { ArrowLeft, Box, Clapperboard, Film, Play, Target, Timer, Zap } from 'lucide-react';
 import { api, isCompleted, raceStart } from '../../shared/api';
 import { useData } from '../../shared/lib/useData';
 import { DRIVER_BY_CODE, SEASON, TEAM_BY_ID } from '../../shared/mock/season';
@@ -14,6 +14,7 @@ import { CIRCUITS } from '../../shared/data/circuits';
 import { LapSimulator } from '../../widgets/lap-simulator';
 import { AiPreview } from '../../widgets/ai-preview/AiPreview';
 import { LivePredictor } from '../../widgets/ai-preview/LivePredictor';
+import { LiveTiming } from '../../widgets/live-timing/LiveTiming';
 import { GHOST_POLE, GHOST_RECORD } from '../../widgets/lap-simulator/ghosts';
 import { referenceGhosts } from '../../shared/mock/trackRecords';
 import { PoleChallengeButton } from '../../features/pole-challenge/PoleChallenge';
@@ -391,36 +392,20 @@ function UpcomingWeekend({ ev }: { ev: RaceEvent }) {
         </div>
       </section>
       <AiPreview round={ev.round} laps={ev.laps} />
-      <LiveSection ev={ev} />
-      <MediaPanel ev={ev} lapTime={ev.poleLapTime} upcoming />
+      {/* while the race runs: live map + timing and the live prediction; before it (and after, in CompletedWeekend) — the pole-lap preview */}
+      {isLive(ev, now) ? (
+        <>
+          <LiveTiming ev={ev} />
+          <LivePredictor round={ev.round} />
+        </>
+      ) : (
+        <MediaPanel ev={ev} lapTime={ev.poleLapTime} upcoming />
+      )}
     </>
   );
 }
 
-/** Live prediction while the race is running; before that — an opt-in demo. */
-function LiveSection({ ev }: { ev: RaceEvent }) {
-  const [now] = useState(() => Date.now());
+const isLive = (ev: RaceEvent, now: number) => {
   const start = raceStart(ev);
-  const live = now >= start && now < start + 2 * 3600_000;
-  const [demo, setDemo] = useState(false);
-  if (live || demo) return <LivePredictor round={ev.round} demo={!live} />;
-  return (
-    <section className="relative overflow-hidden rounded-[14px] border border-line bg-surface p-6 md:p-8">
-      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-violet-500/15 blur-[80px]" />
-      <div className="relative flex flex-wrap items-center gap-6">
-        <div className="flex-1">
-          <div className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-violet-500 dark:text-violet-300">
-            <Radio className="h-4 w-4" /> Live-прогноз
-          </div>
-          <h3 className="display text-2xl">Під час гонки тут буде прогноз у реальному часі</h3>
-          <p className="mt-2 max-w-2xl text-sm text-muted">
-            Щокола модель перераховує, хто куди рухається: хто зараз п’ятий, але після піт-стопів суперників за 10 кіл буде першим, і як найімовірніше завершиться гонка.
-          </p>
-        </div>
-        <button type="button" onClick={() => setDemo(true)} className="flex items-center gap-2 rounded-full bg-f1-red px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#ff1a12]">
-          <Play className="h-4 w-4" /> Запустити демо
-        </button>
-      </div>
-    </section>
-  );
-}
+  return now >= start && now < start + 2 * 3600_000;
+};

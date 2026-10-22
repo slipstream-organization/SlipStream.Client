@@ -122,6 +122,19 @@ function checkerTexture(cols: number, rows: number) {
   return t;
 }
 
+function discTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const ctx = c.getContext('2d')!;
+  ctx.beginPath();
+  ctx.arc(32, 32, 30, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 function badgeTexture(label: string) {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
@@ -134,7 +147,7 @@ function badgeTexture(label: string) {
   ctx.strokeStyle = '#8a8f98';
   ctx.stroke();
   ctx.fillStyle = '#3a3d44';
-  ctx.font = 'bold 44px "JetBrains Mono", monospace';
+  ctx.font = 'bold 58px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, 64, 68);
@@ -249,7 +262,9 @@ interface SceneProps {
 export function TrackScene({ runs, period, clock, cameraMode, onTick }: SceneProps) {
   const main = runs[0].lap;
   const cars = useRef<(THREE.Group | null)[]>([]);
-  const markers = useRef<(THREE.Mesh | null)[]>([]);
+  const markers = useRef<(THREE.Sprite | null)[]>([]);
+  const disc = useMemo(() => discTexture(), []);
+  useEffect(() => () => disc.dispose(), [disc]);
   const trails = useMemo(() => runs.map(() => makeTrail()), [runs]);
   const trailColors = useMemo(() => runs.map((r, k) => new THREE.Color(k === 0 ? C.car : r.color)), [runs]);
   useEffect(() => () => trails.forEach((t) => t.dispose()), [trails]);
@@ -277,8 +292,9 @@ export function TrackScene({ runs, period, clock, cameraMode, onTick }: ScenePro
   }, [main]);
 
   // map view widens the track (like a model) so the whole layout reads clearly
-  const scale = cameraMode === 'top' ? Math.max(1, overview.size / 650) : 1;
-  const badge = cameraMode === 'top' ? overview.size * 0.03 : 7;
+  const mapView = cameraMode === 'top';
+  const scale = mapView ? Math.max(1, overview.size / 650) : 1;
+  const badge = mapView ? overview.size * 0.022 : 7;
   const h = SLAB_H * scale;
 
   // static shadow: rendered once per layout/scale instead of every frame
@@ -325,14 +341,14 @@ export function TrackScene({ runs, period, clock, cameraMode, onTick }: ScenePro
       if (g) {
         g.position.set(s.x, h + 0.01 + k * 0.01, -s.y);
         g.rotation.set(0, hd, 0);
-        const cs = cameraMode === 'top' ? scale * 2.2 : 1;
+        const cs = mapView ? scale * 2.2 : 1;
         g.scale.set(cs, cs, cs);
       }
       updateTrail(trails[k], lap, Math.min(fi, lap.n - 1), scale, h + (0.06 + k * 0.03) * scale, trailColors[k]);
       const m = markers.current[k];
       if (m) {
         m.visible = cameraMode === 'top';
-        m.position.set(s.x, h + 0.3 * scale + k * 0.2, -s.y);
+        m.position.set(s.x, h + overview.size * 0.012, -s.y);
       }
       if (k === 0) mainPose = { x: s.x, y: s.y, h: hd };
     });
@@ -353,7 +369,7 @@ export function TrackScene({ runs, period, clock, cameraMode, onTick }: ScenePro
       desired.set(overview.x - v.x * d, overview.size * 0.62, overview.z + v.y * d);
       look.set(overview.x, 0, overview.z);
     }
-    const k = 1 - Math.exp(-dt * (cameraMode === 'top' ? 3 : 6));
+    const k = 1 - Math.exp(-dt * (mapView ? 3 : 6));
     camera.position.lerp(desired, k);
     camTarget.current.lerp(look, k);
     camera.lookAt(camTarget.current);
@@ -365,7 +381,7 @@ export function TrackScene({ runs, period, clock, cameraMode, onTick }: ScenePro
   return (
     <>
       <color attach="background" args={[C.sky]} />
-      <fog attach="fog" args={[C.sky, cameraMode === 'top' ? overview.size * 1.6 : 350, cameraMode === 'top' ? overview.size * 3.5 : 1600]} />
+      <fog attach="fog" args={[C.sky, mapView ? overview.size * 1.6 : 350, mapView ? overview.size * 3.5 : 1600]} />
       <hemisphereLight args={['#ffffff', '#9da1a8', 1.4]} />
       <directionalLight
         ref={light}
@@ -395,12 +411,15 @@ export function TrackScene({ runs, period, clock, cameraMode, onTick }: ScenePro
           <meshBasicMaterial vertexColors side={THREE.DoubleSide} />
         </mesh>
       ))}
-      {runs.map((run, k) => (
-        <mesh key={`m${k}`} ref={(m) => void (markers.current[k] = m)} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
-          <circleGeometry args={[overview.size * (k ? 0.009 : 0.012), 28]} />
-          <meshBasicMaterial color={run.ghost ? run.color : '#26272b'} transparent opacity={run.ghost ? 0.85 : 1} depthWrite={false} />
-        </mesh>
-      ))}
+      {/* map markers are sprites, so they stay round whatever the camera angle */}
+      {runs.map((run, k) => {
+        const d = overview.size * (k ? 0.014 : 0.017);
+        return (
+          <sprite key={`m${k}`} ref={(m) => void (markers.current[k] = m)} visible={false} scale={[d, d, 1]} renderOrder={50 - k}>
+            <spriteMaterial map={disc} color={run.ghost ? run.color : '#26272b'} transparent depthTest={false} depthWrite={false} />
+          </sprite>
+        );
+      })}
     </>
   );
 }

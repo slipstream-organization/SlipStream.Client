@@ -227,12 +227,17 @@ function MyLaps({ me }: { me: UserProfile }) {
 
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] grid place-items-center bg-black/85 p-4" onClick={() => setOpen(null)}>
-            <motion.div initial={{ scale: 0.92, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }} className="relative max-h-[calc(100vh-4rem)] w-full max-w-5xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <button type="button" onClick={() => setOpen(null)} className="absolute -top-10 right-0 flex items-center gap-1 text-sm font-bold text-white/80 hover:text-white">
-                <X className="h-4 w-4" /> Закрити
-              </button>
-              <MyLapViewer lap={open} handle={me.handle} />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] grid place-items-center bg-black/80 p-2 backdrop-blur-md sm:p-4" onClick={() => setOpen(null)}>
+            <motion.div
+              initial={{ scale: 0.94, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              // as wide as the screen allows while the 16:9 scene still fits in height
+              style={{ maxWidth: 'min(1440px, calc((100dvh - 8rem) * 16 / 9))' }}
+              className="flex max-h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d12] shadow-[0_30px_80px_rgba(0,0,0,0.6)] sm:max-h-[calc(100dvh-2rem)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MyLapViewer lap={open} handle={me.handle} onClose={() => setOpen(null)} />
             </motion.div>
           </motion.div>
         )}
@@ -279,7 +284,7 @@ function Tasks({ me }: { me: UserProfile }) {
 
 type LapView = '3d' | 'analysis';
 
-function MyLapViewer({ lap, handle }: { lap: UserLap; handle: string }) {
+function MyLapViewer({ lap, handle, onClose }: { lap: UserLap; handle: string; onClose: () => void }) {
   const [view, setView] = useState<LapView>('3d');
   const race = RACES.find((r) => r.round === lap.round)!;
   const style = lapStyle(lap);
@@ -294,10 +299,10 @@ function MyLapViewer({ lap, handle }: { lap: UserLap; handle: string }) {
     : [{ label: ref.label, detail: ref.code, lapTime: ref.lapTime, color: GHOST_POLE }];
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-white">
-          <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">Hot lap · {CIRCUITS[lap.circuitId].name}</div>
+    <>
+      <div className="flex flex-wrap items-center gap-3 border-b border-white/10 bg-gradient-to-r from-f1-red/15 via-transparent to-transparent px-4 py-3 sm:px-5">
+        <div className="mr-auto min-w-0 text-white">
+          <div className="truncate text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">Hot lap · {CIRCUITS[lap.circuitId].name}</div>
           <div className="display text-3xl">{formatLapTime(lap.lapTime)}</div>
         </div>
         <Segmented
@@ -309,7 +314,11 @@ function MyLapViewer({ lap, handle }: { lap: UserLap; handle: string }) {
             { value: 'analysis', label: <><Activity className="h-3.5 w-3.5" /> Аналіз</> },
           ]}
         />
+        <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/80 transition hover:bg-f1-red hover:text-white" aria-label="Закрити">
+          <X className="h-4 w-4" />
+        </button>
       </div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-2 sm:p-3">
       <AnimatePresence mode="wait">
         <motion.div key={view} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
           {view === '3d' ? (
@@ -332,6 +341,7 @@ function MyLapViewer({ lap, handle }: { lap: UserLap; handle: string }) {
           )}
         </motion.div>
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 }

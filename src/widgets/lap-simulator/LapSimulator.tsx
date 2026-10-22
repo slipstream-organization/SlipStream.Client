@@ -137,7 +137,7 @@ export default function LapSimulator({ circuitId, title, runs, autoPlay = true, 
           <span className="font-bold tracking-normal">slipstream</span>
           <span className="truncate uppercase text-white/75">{title}</span>
         </div>
-        <ul className="mt-3 inline-flex flex-col gap-1 rounded-lg bg-black/45 p-2 backdrop-blur-sm sm:mt-4">
+        <ul className={'mt-3 inline-flex flex-col gap-1 rounded-lg bg-black/45 p-2 backdrop-blur-sm sm:mt-4'}>
           {runs.map((r, k) => (
             <li key={k} className="flex items-center gap-2 text-[10px] sm:text-xs">
               <span className={cn('h-2.5 w-2.5 shrink-0 rounded-sm', k === 0 && 'ring-1 ring-white/60')} style={{ background: k === 0 ? '#9a9da2' : r.color }} />
