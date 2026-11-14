@@ -5,11 +5,14 @@ import { Menu, X } from 'lucide-react';
 import { ThemeToggle } from '../../shared/ui/ThemeToggle';
 import { ME } from '../../shared/mock/profile';
 import { cn } from '../../shared/lib/utils';
+import { useAuth } from '../../app/providers/AuthProvider';
+import { UserAvatar } from '../../shared/ui/UserAvatar';
 
 const NAV = [
   { to: '/', label: 'Головна', end: true },
   { to: '/races', label: 'Гран-прі сезону' },
   { to: '/standings', label: 'Таблиця лідерів' },
+  { to: '/championship', label: 'Битва за титул' },
   { to: '/game', label: 'Predict & Bingo' },
   { to: '/profile', label: 'Профіль' },
 ];
@@ -35,6 +38,7 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const { user, status } = useAuth();
 
   useMotionValueEvent(scrollY, 'change', (y) => {
     const prev = scrollY.getPrevious() ?? 0;
@@ -56,7 +60,7 @@ export function Header() {
         <Logo />
 
         <nav className="ml-4 hidden h-full items-stretch lg:flex">
-          {NAV.slice(0, 4).map((item) => (
+          {NAV.slice(0, 5).map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className="relative flex items-center px-4 text-sm font-bold uppercase tracking-wide">
               {({ isActive }) => (
                 <>
@@ -72,21 +76,30 @@ export function Header() {
 
         <div className="ml-auto flex items-center gap-3">
           <ThemeToggle />
-          <NavLink
-            to="/profile"
-            className={({ isActive }) =>
-              cn(
-                'hidden items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-sm font-bold transition-colors sm:flex',
-                isActive ? 'border-f1-red' : 'border-line hover:border-f1-red/60',
-              )
-            }
-          >
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-f1-red to-orange-500 text-xs text-white">
-              {ME.name[0]}
-            </span>
-            <span>{ME.handle}</span>
-            <span className="font-mono text-xs text-muted">{ME.rating}</span>
-          </NavLink>
+          {user ? (
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                cn(
+                  'hidden items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-sm font-bold transition-colors sm:flex',
+                  isActive ? 'border-f1-red' : 'border-line hover:border-f1-red/60',
+                )
+              }
+            >
+              <UserAvatar name={user.name} avatarUrl={user.avatarUrl} className="h-7 w-7 text-xs" />
+              <span>{user.handle}</span>
+              <span className="font-mono text-xs text-muted">{ME.rating}</span>
+            </NavLink>
+          ) : (
+            status === 'anonymous' && (
+              <Link
+                to={`/login?returnUrl=${encodeURIComponent(pathname)}`}
+                className="hidden rounded-full bg-f1-red px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-white transition-transform hover:scale-[1.03] sm:block"
+              >
+                Увійти
+              </Link>
+            )
+          )}
           <button type="button" className="grid h-9 w-9 place-items-center rounded-full border border-line lg:hidden" onClick={() => setOpen((o) => !o)} aria-label="Меню">
             {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>

@@ -134,7 +134,12 @@ function DriversTable({ rows }: { rows: StandingRow[] }) {
   return (
     <>
       {rows[0] && <Leader row={rows[0]} kind="drivers" />}
-      <p className="mb-2 text-xs text-muted">Натисни на пілота, щоб відкрити його сторінку: статистика, біографія, новини</p>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted">Натисни на пілота, щоб відкрити його сторінку: статистика, біографія, новини</p>
+        <Link to="/championship" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-f1-red hover:underline">
+          Хто ще може стати чемпіоном <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
       <div className="card overflow-hidden">
         {rows.map((r, i) => {
           const d = DRIVER_BY_CODE[r.id];

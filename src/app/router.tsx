@@ -8,6 +8,10 @@ import { StandingsPage } from '../pages/standings/StandingsPage';
 import { GamePage } from '../pages/game/GamePage';
 import { ProfilePage } from '../pages/profile/ProfilePage';
 import { DriverPage } from '../pages/driver/DriverPage';
+import { ChampionshipPage } from '../pages/championship/ChampionshipPage';
+import { LoginPage } from '../pages/login/LoginPage';
+import { AuthCallbackPage } from '../pages/auth/AuthCallbackPage';
+import { RequireAuth } from './RequireAuth';
 
 export const router = createBrowserRouter([
   {
@@ -18,9 +22,12 @@ export const router = createBrowserRouter([
       { path: 'races', element: <SchedulePage /> },
       { path: 'races/:round', element: <RacePage /> },
       { path: 'standings', element: <StandingsPage /> },
+      { path: 'championship', element: <ChampionshipPage /> },
       { path: 'drivers/:code', element: <DriverPage /> },
       { path: 'game', element: <GamePage /> },
-      { path: 'profile', element: <ProfilePage /> },
+      { path: 'profile', element: <RequireAuth><ProfilePage /></RequireAuth> },
+      { path: 'login', element: <LoginPage /> },
+      { path: 'auth/callback', element: <AuthCallbackPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },

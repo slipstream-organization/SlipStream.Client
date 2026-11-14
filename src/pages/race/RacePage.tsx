@@ -15,7 +15,7 @@ import { LapSimulator } from '../../widgets/lap-simulator';
 import { AiPreview } from '../../widgets/ai-preview/AiPreview';
 import { LivePredictor } from '../../widgets/ai-preview/LivePredictor';
 import { LiveTiming } from '../../widgets/live-timing/LiveTiming';
-import { GHOST_POLE, GHOST_RECORD } from '../../widgets/lap-simulator/ghosts';
+import { GHOST_POLE, GHOST_RECORD, MAIN_CAR } from '../../widgets/lap-simulator/ghosts';
 import { referenceGhosts } from '../../shared/mock/trackRecords';
 import { PoleChallengeButton } from '../../features/pole-challenge/PoleChallenge';
 import { Countdown } from '../../widgets/countdown/Countdown';
@@ -117,7 +117,7 @@ function MediaPanel({ ev, lapTime, driverCode, upcoming }: { ev: RaceEvent; lapT
               circuitId={ev.circuitId}
               title={`${SEASON} ${ev.country} GP · ${upcoming ? 'Reference lap' : 'Qualifying'}`}
               runs={[
-                { label: upcoming ? 'Орієнтир поулу' : `Поул ${SEASON}`, detail: driverCode, lapTime, color: '#9a9da2' },
+                { label: upcoming ? 'Орієнтир поулу' : `Поул ${SEASON}`, detail: driverCode, lapTime, color: MAIN_CAR },
                 ...referenceGhosts(ev.circuitId, { pole: GHOST_POLE, record: GHOST_RECORD }),
               ]}
             />

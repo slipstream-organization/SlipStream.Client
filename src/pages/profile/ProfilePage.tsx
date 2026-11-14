@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { Activity, Award, Box, CheckCircle2, Play, Target, TrendingUp, X } from 'lucide-react';
+import { Activity, Award, Box, CheckCircle2, LogOut, Pencil, Play, Target, TrendingUp, X } from 'lucide-react';
+import { useAuth } from '../../app/providers/AuthProvider';
+import { UserAvatar } from '../../shared/ui/UserAvatar';
+import { ProfileEditor } from '../../widgets/profile-editor/ProfileEditor';
 import { api, isCompleted } from '../../shared/api';
 import { useData } from '../../shared/lib/useData';
 import type { UserLap, UserProfile } from '../../shared/mock/profile';
 import { DRIVER_BY_CODE, RACES, SEASON, TEAM_BY_ID } from '../../shared/mock/season';
-import type { TeamId } from '../../shared/model/types';
+import type { Driver, Team, TeamId } from '../../shared/model/types';
 import { Flag, Loader, SectionTitle, Segmented } from '../../shared/ui/atoms';
 import { fadeUp, stagger } from '../../shared/ui/motion';
 import { TrackOutline } from '../../shared/ui/TrackOutline';
@@ -14,18 +17,30 @@ import { CIRCUITS } from '../../shared/data/circuits';
 import { LapSimulator } from '../../widgets/lap-simulator';
 import { LapAnalysisPanel } from '../../widgets/lap-simulator/LapAnalysisPanel';
 import { getLap, getProLap } from '../../widgets/lap-simulator/lapModel';
-import { GHOST_POLE, GHOST_RECORD } from '../../widgets/lap-simulator/ghosts';
+import { GHOST_POLE, GHOST_RECORD, MAIN_CAR } from '../../widgets/lap-simulator/ghosts';
 import { REAL_LAPS, referenceGhosts } from '../../shared/mock/trackRecords';
 import { generateWeekend } from '../../shared/mock/results';
 import { cn, formatLapTime } from '../../shared/lib/utils';
 import { useMyLaps } from '../../shared/lib/lapStore';
 
 export function ProfilePage() {
-  const { data: me } = useData(api.me);
-  if (!me) return <Loader className="py-40" />;
+  const { user } = useAuth();
+  const { data: stats } = useData(api.me);
+  const [editing, setEditing] = useState(false);
+  if (!stats || !user) return <Loader className="py-40" />;
+
+  const me: UserProfile = {
+    ...stats,
+    name: user.name,
+    handle: user.handle,
+    favouriteTeam: user.favouriteTeam ?? '',
+    favouriteDriver: user.favouriteDriver ?? '',
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 pt-10 md:px-6">
-      <ProfileHeader me={me} />
+      <ProfileHeader me={me} avatarUrl={user.avatarUrl} onEdit={() => setEditing(true)} />
+      <AnimatePresence>{editing && <ProfileEditor user={user} onClose={() => setEditing(false)} />}</AnimatePresence>
       <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_380px]">
         <div className="flex flex-col gap-12">
           <PredictionStats me={me} />
@@ -37,13 +52,22 @@ export function ProfilePage() {
   );
 }
 
-function ProfileHeader({ me }: { me: UserProfile }) {
-  const team = TEAM_BY_ID[me.favouriteTeam as TeamId];
-  const driver = DRIVER_BY_CODE[me.favouriteDriver];
+function ProfileHeader({ me, avatarUrl, onEdit }: { me: UserProfile; avatarUrl: string | null; onEdit: () => void }) {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const team: Team | undefined = TEAM_BY_ID[me.favouriteTeam as TeamId];
+  const driver: Driver | undefined = DRIVER_BY_CODE[me.favouriteDriver];
+  const accent = team?.color ?? '#e10600';
   const pct = me.xp / me.xpNext;
+
+  const signOut = async (everywhere: boolean) => {
+    await logout(everywhere);
+    navigate('/');
+  };
+
   return (
     <motion.section variants={stagger(0.08)} initial="hidden" animate="show" className="relative overflow-hidden rounded-[18px] border border-white/10 bg-[#0b0b0f] p-6 text-white md:p-10">
-      <div className="pointer-events-none absolute inset-0" style={{ background: `radial-gradient(circle at 85% 20%, ${team.color}55, transparent 50%)` }} />
+      <div className="pointer-events-none absolute inset-0" style={{ background: `radial-gradient(circle at 85% 20%, ${accent}55, transparent 50%)` }} />
       <div className="speed-stripes pointer-events-none absolute -left-10 bottom-6 h-2 w-1/3 opacity-60" />
       <div className="relative grid items-center gap-8 md:grid-cols-[auto_1fr_auto]">
         <motion.div variants={fadeUp} className="relative h-28 w-28 md:h-32 md:w-32">
@@ -51,7 +75,7 @@ function ProfileHeader({ me }: { me: UserProfile }) {
             <circle cx="60" cy="60" r="54" stroke="rgba(255,255,255,.1)" strokeWidth="6" fill="none" />
             <motion.circle cx="60" cy="60" r="54" stroke="#e10600" strokeWidth="6" fill="none" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: pct }} transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }} />
           </svg>
-          <div className="absolute inset-3 grid place-items-center rounded-full bg-gradient-to-br from-f1-red to-orange-500 text-4xl font-black">{me.name[0]}</div>
+          <UserAvatar name={me.name} avatarUrl={avatarUrl} className="absolute inset-3 text-4xl" />
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-black">LVL {me.level}</div>
         </motion.div>
 
@@ -59,12 +83,32 @@ function ProfileHeader({ me }: { me: UserProfile }) {
           <div className="text-xs font-bold uppercase tracking-[0.25em] text-white/50">@{me.handle}</div>
           <h1 className="display mt-1 text-5xl md:text-6xl">{me.name}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded-full px-3 py-1 font-bold text-black" style={{ background: team.color }}>
-              {team.name}
-            </span>
-            <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 font-bold">
-              <Flag code={driver.country} className="h-4 w-4 ring-0" /> {driver.firstName} {driver.lastName}
-            </span>
+            {team && (
+              <span className="rounded-full px-3 py-1 font-bold text-black" style={{ background: team.color }}>
+                {team.name}
+              </span>
+            )}
+            {driver && (
+              <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 font-bold">
+                <Flag code={driver.country} className="h-4 w-4 ring-0" /> {driver.firstName} {driver.lastName}
+              </span>
+            )}
+            {!team && !driver && (
+              <button type="button" onClick={onEdit} className="rounded-full border border-dashed border-white/30 px-3 py-1 font-bold text-white/60 hover:text-white">
+                Обрати команду і пілота
+              </button>
+            )}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold uppercase tracking-wide">
+            <button type="button" onClick={onEdit} className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-black">
+              <Pencil className="h-3.5 w-3.5" /> Редагувати
+            </button>
+            <button type="button" onClick={() => signOut(false)} className="flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 text-white/80 hover:text-white">
+              <LogOut className="h-3.5 w-3.5" /> Вийти
+            </button>
+            <button type="button" onClick={() => signOut(true)} className="rounded-full border border-white/10 px-3 py-1.5 text-white/50 hover:text-white">
+              Вийти на всіх пристроях
+            </button>
           </div>
           <div className="mt-4 max-w-sm">
             <div className="mb-1 flex justify-between font-mono text-[11px] text-white/60">
@@ -326,7 +370,7 @@ function MyLapViewer({ lap, handle, onClose }: { lap: UserLap; handle: string; o
               circuitId={lap.circuitId}
               title={`${SEASON} ${CIRCUITS[lap.circuitId].location} · My hot lap`}
               runs={[
-                { label: 'Твоє коло', detail: handle, lapTime: lap.lapTime, color: '#9a9da2', style },
+                { label: 'Твоє коло', detail: handle, lapTime: lap.lapTime, color: MAIN_CAR, style },
                 ...ghosts,
               ]}
             />
