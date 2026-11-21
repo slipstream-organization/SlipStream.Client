@@ -68,7 +68,7 @@ export const DriverStatsModal: React.FC<Props> = ({ driver, onClose }) => {
         
         <div className="p-8 border-b border-line bg-surface-2 flex gap-6 items-end">
           {driver.headshot_url && (
-            <img src={driver.headshot_url} alt={driver.full_name} className="w-32 h-32 object-contain drop-shadow-[0_8px_16px_var(--c-shadow)]" />
+            <img decoding="async" src={driver.headshot_url} alt={driver.full_name} className="w-32 h-32 object-contain drop-shadow-[0_8px_16px_var(--c-shadow)]" />
           )}
           <div>
             <div className="text-accent-ink font-bold text-xl mb-1">{driver.driver_number}</div>

@@ -14,6 +14,8 @@ import { StateBlock } from '../../shared/ui/StateBlock';
 import { Button } from '../../shared/ui/Button';
 import { StandingsChart, type ChartSeries } from '../../widgets/standings-chart/StandingsChart';
 import { cn } from '../../shared/lib/utils';
+import { onColor } from '../../shared/lib/color';
+import { RollingNumber } from '../../shared/ui/RollingNumber';
 
 type Kind = 'drivers' | 'constructors';
 type View = 'table' | 'chart';
@@ -99,36 +101,75 @@ export function StandingsPage() {
   );
 }
 
+/**
+ * Leader poster: the team colour is the field. Drivers: the portrait on the left, number behind it.
+ * Constructors: the car is part of the background — it drives in
+ * from the left edge under a colour wash, so the name and the points always sit on clean colour.
+ */
 function Leader({ row, kind }: { row: StandingRow; kind: Kind }) {
-  const color = kind === 'drivers' ? TEAM_BY_ID[DRIVER_BY_CODE[row.id].teamId].color : TEAM_BY_ID[row.id as TeamId].color;
-  const name = kind === 'drivers' ? `${DRIVER_BY_CODE[row.id].firstName} ${DRIVER_BY_CODE[row.id].lastName}` : TEAM_BY_ID[row.id as TeamId].fullName;
+  const teamId = kind === 'drivers' ? DRIVER_BY_CODE[row.id].teamId : (row.id as TeamId);
+  const color = TEAM_BY_ID[teamId].color;
+  const fg = onColor(color);
+  const name = kind === 'drivers' ? `${DRIVER_BY_CODE[row.id].firstName} ${DRIVER_BY_CODE[row.id].lastName}` : TEAM_BY_ID[teamId].fullName;
+  const driver = kind === 'drivers' ? DRIVER_BY_CODE[row.id] : undefined;
   return (
-    <div className="relative mb-4 overflow-hidden rounded-lg p-6 text-black" style={{ background: `linear-gradient(110deg, ${color}, ${color}aa 60%, ${color}55)` }}>
-      <div className="absolute -right-4 -top-8 font-sport text-[180px] font-black italic leading-none text-black/10">1</div>
-      <motion.img
-        src={kind === 'drivers' ? driverPhoto(row.id, '4col') : teamCar(row.id as TeamId, 320)}
-        alt=""
-        onError={(e) => (e.currentTarget.style.display = 'none')}
-        initial={{ opacity: 0, x: 40 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className={cn(
-          'pointer-events-none absolute hidden drop-shadow-[0_10px_20px_rgba(0,0,0,0.35)] md:block',
-          kind === 'drivers' ? 'bottom-0 right-44 h-[115%] object-contain object-bottom' : 'right-40 top-1/2 h-[85%] -translate-y-1/2',
-        )}
-      />
-      <div className="relative flex flex-wrap items-end justify-between gap-4">
+    <div className="relative isolate mb-6 overflow-hidden" style={{ background: color, color: fg }}>
+      {driver ? (
+        <>
+          {/* drivers: the leader's racing number big behind an untinted portrait on the left */}
+          <span aria-hidden className="display-wide pointer-events-none absolute -top-[0.12em] left-0 -z-10 select-none text-[clamp(9rem,22vw,17rem)] leading-none opacity-[0.16]">
+            {driver.number}
+          </span>
+          <motion.img decoding="async"
+            src={driverPhoto(driver.code, '4col')}
+            alt=""
+            aria-hidden
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+            initial={{ opacity: 0, x: '-8%' }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="pointer-events-none absolute bottom-0 left-[2%] -z-10 h-[78%] object-contain object-bottom sm:left-[6%] sm:h-[104%] lg:left-[12%]"
+          />
+          {/* legibility only: on phones the colour rises under the text; wider, the text has its own clean half */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 sm:hidden" style={{ background: `linear-gradient(to top, ${color} 42%, transparent 72%)` }} />
+        </>
+      ) : (
+        <>
+          {/* constructors: the car as backdrop, anchored to the left edge and partly out of frame, driving in */}
+          <motion.img decoding="async"
+            src={teamCar(teamId, 400)}
+            alt=""
+            aria-hidden
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+            initial={{ opacity: 0, x: '-18%' }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="pointer-events-none absolute -left-[22%] top-1/2 -z-10 w-[95%] max-w-none -translate-y-1/2 sm:-left-[14%] sm:w-[78%] lg:-left-[8%] lg:w-[64%]"
+          />
+          {/* colour mask: tints the car, then becomes solid colour under the text */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10"
+            style={{ background: `linear-gradient(90deg, color-mix(in srgb, ${color} 35%, transparent) 0%, color-mix(in srgb, ${color} 60%, transparent) 32%, ${color} 58%)` }}
+          />
+          <span aria-hidden className="display-wide pointer-events-none absolute -bottom-[0.18em] right-2 -z-10 select-none text-[clamp(8rem,20vw,15rem)] leading-none opacity-[0.12]">
+            1
+          </span>
+        </>
+      )}
+
+      <div className="relative ml-auto flex min-h-[240px] w-full flex-col justify-end gap-4 p-6 sm:w-[62%] md:p-8 lg:w-[48%]">
         <div>
-          <div className="text-xs font-bold uppercase tracking-[0.25em] text-black/60">Лідер чемпіонату</div>
-          <div className="display mt-1 text-4xl md:text-5xl">{name}</div>
-          <div className="mt-2 flex gap-4 font-mono text-sm text-black/70">
+          <p className="text-sm font-semibold opacity-80">Лідер чемпіонату {kind === 'drivers' ? 'пілотів' : 'конструкторів'}</p>
+          <h2 className="display mt-1 text-3xl md:text-4xl">{name}</h2>
+          <p className="tnum mt-2 flex flex-wrap gap-x-4 text-sm font-semibold opacity-85">
             <span>{row.wins} перемог</span>
             <span>{row.podiums} подіумів</span>
-          </div>
+          </p>
         </div>
-        <div className="text-right">
-          <div className="display text-6xl">{row.points}</div>
-          <div className="text-xs font-bold uppercase tracking-widest text-black/60">очок</div>
+        <div className="flex items-baseline gap-3 border-t border-current/25 pt-3">
+          <RollingNumber value={row.points} className="text-5xl font-bold md:text-6xl" />
+          <span className="text-sm font-semibold opacity-80">очок</span>
         </div>
       </div>
     </div>
@@ -138,7 +179,7 @@ function Leader({ row, kind }: { row: StandingRow; kind: Kind }) {
 function PointsBar({ value, max, color, delay }: { value: number; max: number; color: string; delay: number }) {
   return (
     <div className="hidden h-1.5 w-40 overflow-hidden rounded-full bg-surface-2 md:block">
-      <motion.div className="h-full rounded-full" style={{ background: color }} initial={{ width: 0 }} animate={{ width: `${(value / (max || 1)) * 100}%` }} transition={{ duration: 0.9, delay, ease: 'easeOut' }} />
+      <motion.div className="h-full rounded-full" style={{ background: color, width: `${(value / (max || 1)) * 100}%`, transformOrigin: 'left' }} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.9, delay, ease: 'easeOut' }} />
     </div>
   );
 }
@@ -241,11 +282,10 @@ function TeamsTable({ rows }: { rows: StandingRow[] }) {
                 {isOpen && (
                   <motion.div
                     key="stats"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                    className="overflow-hidden"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <TeamStatsPanel id={t.id} />
                   </motion.div>

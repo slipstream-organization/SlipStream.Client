@@ -162,12 +162,12 @@ export default function LapSimulator({ circuitId, title, runs, autoPlay = true, 
   return (
     <div ref={root} className={cn('relative isolate aspect-[4/5] w-full overflow-hidden rounded-xl bg-surface-2 font-mono text-ink select-none sm:aspect-video', className)}>
       <Canvas
-        shadows="soft"
-        dpr={[1, 2]}
+        shadows="percentage"
+        dpr={[1, 1.5]}
         resize={{ offsetSize: true }}
         frameloop={visible ? 'always' : 'never'}
         camera={{ fov: 45, near: 0.5, far: 30000, position: [0, 600, 600] }}
-        gl={{ antialias: true, powerPreference: "high-performance" }}
+        gl={{ antialias: (window.devicePixelRatio || 1) < 1.5, powerPreference: "high-performance" }} // MSAA is redundant on hi-DPI screens and costly
         onCreated={({ gl }) => {
           // filmic daylight look; shadows are re-rendered by the scene itself (only where the camera looks)
           gl.shadowMap.autoUpdate = false;

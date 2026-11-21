@@ -245,7 +245,7 @@ export function terrainGeometry(w: WorldBase, grassA: THREE.Color, grassB: THREE
   }
   const M = 420; // margin around the layout
   const spanX = maxX - minX + 2 * M, spanY = maxY - minY + 2 * M;
-  const cell = Math.max(8, Math.max(spanX, spanY) / 190);
+  const cell = Math.max(12, Math.max(spanX, spanY) / 150); // ~40% fewer vertices than before, still smooth under the fog
   const cols = Math.ceil(spanX / cell) + 1, rows = Math.ceil(spanY / cell) + 1;
   const stride = Math.max(1, Math.floor(n / 280));
   const near = 70 + half;

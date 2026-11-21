@@ -120,7 +120,7 @@ function ProfileHeader({ me, avatarUrl, onEdit }: { me: UserProfile; avatarUrl: 
               </span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-ink/10">
-              <motion.div className="h-full bg-f1-red" initial={{ width: 0 }} animate={{ width: `${pct * 100}%` }} transition={{ duration: 1.2, delay: 0.4 }} />
+              <motion.div className="h-full origin-left bg-f1-red" style={{ width: `${pct * 100}%` }} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 1.2, delay: 0.4 }} />
             </div>
           </div>
         </motion.div>
@@ -177,9 +177,10 @@ function PredictionStats({ me }: { me: UserProfile }) {
                   {race?.country}: {p.points}
                 </span>
                 <motion.div
-                  className={cn('w-full rounded-t', best ? 'bg-f1-red' : 'bg-ink/20 group-hover:bg-ink/40')}
-                  initial={{ height: 0 }}
-                  whileInView={{ height: `${(p.points / max) * 100}%` }}
+                  className={cn('w-full origin-bottom rounded-t', best ? 'bg-f1-red' : 'bg-ink/20 group-hover:bg-ink/40')}
+                  style={{ height: `${(p.points / max) * 100}%` }}
+                  initial={{ scaleY: 0 }}
+                  whileInView={{ scaleY: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.7, delay: i * 0.03, ease: 'easeOut' }}
                 />
@@ -331,7 +332,7 @@ function Tasks({ me }: { me: UserProfile }) {
                 <p className="mt-1 text-xs text-muted">{t.description}</p>
                 <div className="mt-3 flex items-center gap-2">
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
-                    <motion.div className={cn('h-full rounded-full', done ? 'bg-emerald-500' : 'bg-f1-red')} initial={{ width: 0 }} animate={{ width: `${Math.min(1, t.progress / t.goal) * 100}%` }} transition={{ duration: 1, delay: 0.3 }} />
+                    <motion.div className={cn('h-full origin-left rounded-full', done ? 'bg-emerald-500' : 'bg-f1-red')} style={{ width: `${Math.min(1, t.progress / t.goal) * 100}%` }} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 1, delay: 0.3 }} />
                   </div>
                   <span className="font-mono text-xs text-muted">
                     {t.progress}/{t.goal}

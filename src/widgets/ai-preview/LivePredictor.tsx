@@ -107,7 +107,7 @@ export function LivePredictor({ round, demo }: Props) {
         </div>
       </div>
       <div className="mb-4 h-1 overflow-hidden rounded-full bg-surface-2">
-        <motion.div className="h-full bg-f1-red" animate={{ width: `${(lap / race.laps) * 100}%` }} transition={{ duration: 0.6 }} />
+        <motion.div className="h-full w-full origin-left bg-f1-red" animate={{ scaleX: lap / race.laps }} transition={{ duration: 0.6 }} />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[360px_1fr]">
@@ -204,7 +204,7 @@ export function LivePredictor({ round, demo }: Props) {
                     <span className="font-bold">{c}</span>
                     <span className="ml-auto flex items-center gap-2">
                       <span className="h-1.5 w-14 overflow-hidden rounded-full bg-surface-2">
-                        <motion.span className="block h-full rounded-full bg-violet-500" animate={{ width: `${confidence(c) * 100}%` }} />
+                        <motion.span className="block h-full w-full origin-left rounded-full bg-violet-500" animate={{ scaleX: confidence(c) }} />
                       </span>
                       <span className="w-9 text-right font-mono text-xs">{Math.round(confidence(c) * 100)}%</span>
                     </span>

@@ -20,12 +20,12 @@ function CarCard({ id }: { id: TeamId }) {
       style={{ background: `linear-gradient(160deg, ${team.color}, ${team.color}33 70%)` }}
     >
       {!logoFailed ? (
-        <img src={teamLogo(id)} alt={team.name} onError={() => setLogoFailed(true)} className="h-8 w-auto self-start drop-shadow" />
+        <img decoding="async" src={teamLogo(id)} alt={team.name} onError={() => setLogoFailed(true)} className="h-8 w-auto self-start drop-shadow" />
       ) : (
         <span className="display text-xl text-black/70">{team.name}</span>
       )}
       {!carFailed && (
-        <motion.img
+        <motion.img decoding="async"
           src={teamCar(id, 320)}
           alt={`${team.name} ${SEASON}`}
           onError={() => setCarFailed(true)}
@@ -81,9 +81,9 @@ export function TeamStatsPanel({ id }: { id: TeamId }) {
                     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface">
                       <motion.div
                         className="h-full rounded-full"
-                        style={{ background: team.color }}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(d.points / maxPts) * 100}%` }}
+                        style={{ background: team.color, width: `${(d.points / maxPts) * 100}%`, transformOrigin: 'left' }}
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
                         transition={{ duration: 0.8, delay: 0.2 + i * 0.1 }}
                       />
                     </div>

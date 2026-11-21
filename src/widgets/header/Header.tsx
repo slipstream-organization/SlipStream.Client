@@ -48,7 +48,8 @@ export function Header() {
 
   useMotionValueEvent(scrollY, 'change', (y) => {
     const prev = scrollY.getPrevious() ?? 0;
-    setHidden(y > prev && y > 160 && !open);
+    const next = y > prev && y > 160 && !open;
+    if (next !== hidden) setHidden(next);
   });
 
   return (

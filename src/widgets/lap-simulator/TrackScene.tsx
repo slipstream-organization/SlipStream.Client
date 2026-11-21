@@ -67,8 +67,6 @@ type Palette = { [K in keyof typeof SCENE_VARS]: string };
 
 /** Direction towards the sun (afternoon, from behind-left of a typical broadcast angle). */
 const SUN = new THREE.Vector3(-0.45, 1, -0.32).normalize();
-/** Half-size of the shadow box that follows the camera, metres — sharp shadows where you look. */
-const SHADOW_R = 70;
 const SHADOW_MAP = 2048;
 /** Heli camera: distance behind, height above and sideways offset from the leader, metres. */
 const HELI = { back: 26, up: 23, side: 5, ahead: 10 };
@@ -167,7 +165,7 @@ function updateTrails(core: THREE.BufferGeometry, glow: THREE.BufferGeometry, la
  */
 function AdaptiveDpr() {
   const setDpr = useThree((s) => s.setDpr);
-  const st = useRef({ acc: 0, frames: 0, dpr: Math.min(window.devicePixelRatio || 1, 2), ceiling: Math.min(window.devicePixelRatio || 1, 2), cooldown: 2 });
+  const st = useRef({ acc: 0, frames: 0, dpr: Math.min(window.devicePixelRatio || 1, 1.5), ceiling: Math.min(window.devicePixelRatio || 1, 1.5), cooldown: 2 });
   useFrame((_, dt) => {
     const s = st.current;
     s.acc += dt;
@@ -179,8 +177,8 @@ function AdaptiveDpr() {
     s.frames = 0;
     if (s.cooldown > 0) return;
     let next = s.dpr;
-    if (avg > 1 / 50) {
-      // below ~50 fps → fewer pixels, and never climb back to the level that was too slow
+    if (avg > 1 / 55) {
+      // below ~55 fps → fewer pixels, and never climb back to the level that was too slow
       next = Math.max(1, s.dpr - 0.25);
       s.ceiling = next;
     } else if (avg < 1 / 58 && s.dpr < s.ceiling) next = Math.min(s.ceiling, s.dpr + 0.25);
@@ -205,6 +203,24 @@ function checkerTexture(cols: number, rows: number) {
     }
   const t = new THREE.CanvasTexture(c);
   t.magFilter = THREE.NearestFilter;
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/** Soft elliptical contact shadow (white alpha falloff; tinted black by the material). */
+function blobTexture() {
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 64;
+  const ctx = c.getContext('2d')!;
+  ctx.scale(1, 0.5); // draw a round gradient on a 128×128 area, squashed into 128×64 → ellipse
+  const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 62);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.55, 'rgba(255,255,255,0.55)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }
@@ -237,7 +253,7 @@ function badgeTexture(label: string, C: Palette) {
   ctx.strokeStyle = C.badgeRing;
   ctx.stroke();
   ctx.fillStyle = C.badgeText;
-  ctx.font = 'bold 54px "JetBrains Mono", monospace';
+  ctx.font = 'bold 54px "Tektur", "Arial Narrow", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, 64, 68);
@@ -318,12 +334,12 @@ function Car({ ghost, tint, C }: { ghost?: boolean; tint: string; C: Palette }) 
   useEffect(() => () => Object.values(mats).forEach((m) => m.dispose()), [mats]);
 
   const part = (pos: [number, number, number], size: [number, number, number], mat: THREE.Material, rot?: [number, number, number]) => (
-    <mesh position={pos} rotation={rot} material={mat} castShadow={!ghost}>
+    <mesh position={pos} rotation={rot} material={mat} castShadow={false}>
       <boxGeometry args={size} />
     </mesh>
   );
   const wheel = (x: number, z: number, r: number, w: number) => (
-    <mesh position={[x, r, z]} rotation={[Math.PI / 2, 0, 0]} material={mats.tyre} castShadow={!ghost}>
+    <mesh position={[x, r, z]} rotation={[Math.PI / 2, 0, 0]} material={mats.tyre} castShadow={false}>
       <cylinderGeometry args={[r, r, w, 16]} />
     </mesh>
   );
@@ -396,6 +412,8 @@ export function TrackScene({ circuitId, runs, period, clock, cameraMode, onTick 
   const wheelAngle = useRef<number[]>([]);
   const markers = useRef<(THREE.Sprite | null)[]>([]);
   const disc = useMemo(() => discTexture(), []);
+  const blob = useMemo(() => blobTexture(), []);
+  useEffect(() => () => blob.dispose(), [blob]);
   useEffect(() => () => disc.dispose(), [disc]);
   // each car gets a thin bright core and a wide soft glow underneath
   const trails = useMemo(() => runs.map(() => ({ core: makeTrail(), glow: makeTrail() })), [runs]);
@@ -453,9 +471,9 @@ export function TrackScene({ circuitId, runs, period, clock, cameraMode, onTick 
   const h = SLAB_H * scale;
   const base = useMemo(() => worldBase(main, z, scale), [main, z, scale]);
 
-  // Shadows (shadowMap.autoUpdate is off, see Canvas onCreated):
-  //  - follow views: a small box around the camera target, re-rendered every frame → crisp shadows
-  //  - map view: one wide static box over the whole layout, rendered once
+  // Shadows (shadowMap.autoUpdate is off, see Canvas onCreated): the static world (stands, garages,
+  // bridge, gantry) is rendered into ONE shadow map over the whole layout, once per layout/theme.
+  // Re-rendering it every frame doubled the scene cost; cars use cheap blob shadows instead.
   const light = useRef<THREE.DirectionalLight>(null);
   const shadowDirty = useRef(true);
   const skyGeo = useMemo(() => skyGeometry(C.sky, C.horizon), [C.sky, C.horizon]);
@@ -473,23 +491,21 @@ export function TrackScene({ circuitId, runs, period, clock, cameraMode, onTick 
     const l = light.current;
     if (!l) return;
     const cam = l.shadow.camera;
-    const r = mapView ? overview.size * 0.75 : SHADOW_R;
+    const r = overview.size * 0.75;
     cam.left = -r;
     cam.right = r;
     cam.top = r;
     cam.bottom = -r;
     cam.near = 1;
-    cam.far = mapView ? overview.size * 3 : 600;
+    cam.far = overview.size * 3;
     cam.updateProjectionMatrix();
-    // bias scales with the texel size (≈7 cm close up, metres over the whole map)
-    l.shadow.normalBias = mapView ? 0.8 : 0.05;
-    l.shadow.bias = mapView ? -0.001 : -0.0005;
-    if (mapView) {
-      const d = overview.size;
-      l.position.set(overview.x + SUN.x * d, overview.y + SUN.y * d, overview.z + SUN.z * d);
-      l.target.position.set(overview.x, overview.y, overview.z);
-      l.target.updateMatrixWorld();
-    }
+    // texels are ~1–2 m over a whole circuit, so the bias scales with that
+    l.shadow.normalBias = 0.8;
+    l.shadow.bias = -0.001;
+    const d = overview.size;
+    l.position.set(overview.x + SUN.x * d, overview.y + SUN.y * d, overview.z + SUN.z * d);
+    l.target.position.set(overview.x, overview.y, overview.z);
+    l.target.updateMatrixWorld();
     shadowDirty.current = true;
   }, [mapView, overview, base, C]);
 
@@ -589,18 +605,8 @@ export function TrackScene({ circuitId, runs, period, clock, cameraMode, onTick 
     camera.lookAt(camTarget.current);
     if (sky.current) sky.current.position.copy(camera.position);
 
-    // sun + shadow box follow the camera target; snapped to whole shadow texels so edges don't shimmer
-    const l = light.current;
-    if (l && !mapView) {
-      const texel = (2 * SHADOW_R) / SHADOW_MAP;
-      const tx = Math.round(camTarget.current.x / texel) * texel;
-      const ty = Math.round(camTarget.current.y / texel) * texel;
-      const tz = Math.round(camTarget.current.z / texel) * texel;
-      l.target.position.set(tx, ty, tz);
-      l.target.updateMatrixWorld();
-      l.position.set(tx + SUN.x * 250, ty + SUN.y * 250, tz + SUN.z * 250);
-      state.gl.shadowMap.needsUpdate = true;
-    } else if (shadowDirty.current) {
+    // static shadow map: rendered on the first frame after a layout/theme change, never per frame
+    if (shadowDirty.current) {
       state.gl.shadowMap.needsUpdate = true;
       shadowDirty.current = false;
     }
@@ -634,6 +640,11 @@ export function TrackScene({ circuitId, runs, period, clock, cameraMode, onTick 
       <Track base={base} badge={badge} detail={!mapView} C={C} />
       {runs.map((run, k) => (
         <group key={k} ref={(g) => void (cars.current[k] = g)}>
+          {/* soft contact shadow: a textured quad under the car — no shadow-map pass needed */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]} renderOrder={1}>
+            <planeGeometry args={[6.4, 2.8]} />
+            <meshBasicMaterial map={blob} color="#000000" transparent opacity={run.ghost ? 0.35 : 0.55} depthWrite={false} />
+          </mesh>
           <RaceCar spec={carSpecs[k]} ghost={run.ghost} fallback={<Car ghost={run.ghost} tint={run.color} C={C} />} onWheels={(w) => void (wheels.current[k] = w)} />
         </group>
       ))}

@@ -2,16 +2,20 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowLeft, ArrowRight, CalendarDays, Crown, Flag as FlagIcon, Hash, MapPin, Newspaper } from 'lucide-react';
-import { driverNews, getDriverStats } from '../../shared/api';
+import { api, driverNews, getDriverStats } from '../../shared/api';
+import { useData } from '../../shared/lib/useData';
+import type { DriverMedia } from '../../shared/model/types';
 import { BIOS } from '../../shared/mock/bios';
+import { BIO_STORIES } from '../../shared/mock/bioStories';
 import { CAREERS } from '../../shared/mock/careers';
 import { DRIVERS, DRIVER_BY_CODE, SEASON, TEAM_BY_ID } from '../../shared/mock/season';
-import { driverPhoto, teamCar, teamLogo } from '../../shared/lib/media';
+import { teamCar, teamLogo } from '../../shared/lib/media';
 import { DriverBadge, Flag, SectionTitle } from '../../shared/ui/atoms';
 import { fadeUp, stagger } from '../../shared/ui/motion';
 import { DriverStatsPanel } from '../../widgets/driver-stats/DriverStatsPanel';
 import { NewsCard } from '../../widgets/news/NewsCard';
-import { cn } from '../../shared/lib/utils';
+import { RollingNumber } from '../../shared/ui/RollingNumber';
+import { PhotoCarousel } from '../../widgets/photo-carousel/PhotoCarousel';
 
 export function DriverPage() {
   const code = (useParams().code ?? '').toUpperCase();
@@ -37,10 +41,11 @@ function DriverView({ code }: { code: string }) {
   const stats = getDriverStats(code);
   const news = driverNews(code);
   const mate = DRIVERS.find((x) => x.teamId === d.teamId && x.code !== code)!;
+  const media = useData(() => api.driverMedia(code), [code]);
 
   return (
     <div>
-      <Hero code={code} position={stats.season.position} points={stats.season.points} />
+      <Hero code={code} position={stats.season.position} points={stats.season.points} cutout={media.data?.cutout} />
 
       <div className="mx-auto flex max-w-7xl flex-col gap-16 px-4 pt-10 md:px-6">
         {/* quick facts */}
@@ -59,9 +64,7 @@ function DriverView({ code }: { code: string }) {
           </div>
         </section>
 
-        <SeasonResults code={code} />
-
-        {bio && <Biography code={code} />}
+        {bio && <Biography code={code} media={media.data ?? undefined} />}
 
         <section>
           <SectionTitle kicker="Paddock" title="Останні новини" />
@@ -95,61 +98,115 @@ function DriverView({ code }: { code: string }) {
   );
 }
 
-function Hero({ code, position, points }: { code: string; position: number; points: number }) {
+function Hero({ code, position, points, cutout }: { code: string; position: number; points: number; cutout?: string }) {
   const d = DRIVER_BY_CODE[code];
   const team = TEAM_BY_ID[d.teamId];
+  const [cutOk, setCutOk] = useState(true);
   const [carOk, setCarOk] = useState(true);
   const [logoOk, setLogoOk] = useState(true);
   return (
-    <section className="relative overflow-hidden text-ink" style={{ background: `linear-gradient(115deg, var(--c-bg) 30%, color-mix(in srgb, ${team.color} 80%, transparent) 100%)` }}>
-      <div className="pointer-events-none absolute -right-10 -top-16 select-none font-sport text-[260px] font-black italic leading-none text-ink/[0.06] md:text-[420px]">{d.number}</div>
-      <div className="relative mx-auto max-w-7xl px-4 pb-10 pt-8 md:px-6 md:pb-16">
-        <Link to="/standings" className="mb-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted transition hover:text-ink">
-          <ArrowLeft className="h-4 w-4" /> Таблиця лідерів
+    /*
+     * The original hero (first commit), on the theme tokens: paper → team colour in the light theme,
+     * asphalt → team colour in the dark one.
+     */
+    <section
+      className="relative isolate overflow-hidden text-ink"
+      style={{ background: `linear-gradient(115deg, var(--c-bg) 30%, color-mix(in srgb, ${team.color} 78%, var(--c-bg)) 100%)` }}
+    >
+      {/* team-colour glow behind the car */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{ background: `radial-gradient(55% 65% at 74% 62%, color-mix(in srgb, ${team.color} 55%, transparent), transparent 72%)` }}
+      />
+      <span aria-hidden className="display-wide pointer-events-none absolute -right-6 -top-10 -z-10 select-none text-[clamp(15rem,34vw,27rem)] leading-none text-ink/[0.06]">
+        {d.number}
+      </span>
+
+      {/* the driver: official season cut-out, not muted, cropped head-to-hips and anchored to the bottom */}
+      {cutout && cutOk ? (
+        <motion.div
+          aria-hidden
+          initial={{ opacity: 0, x: 60 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+          className="pointer-events-none absolute inset-y-0 right-[-12%] w-[68%] overflow-hidden sm:right-0 sm:w-[46%] lg:right-[5%] lg:w-[36%]"
+        >
+          <img
+            decoding="async"
+            src={cutout}
+            alt=""
+            onError={() => setCutOk(false)}
+            className="absolute left-1/2 top-[6%] h-[140%] w-auto max-w-none -translate-x-1/2 drop-shadow-[0_12px_48px_rgba(0,0,0,0.07)] sm:h-[160%] lg:h-[178%] dark:drop-shadow-[0_12px_48px_rgba(0,0,0,0.35)]"
+          />
+        </motion.div>
+      ) : (
+        carOk && (
+          // no portrait → the car, large and muted under the team colour
+          <div aria-hidden className="pointer-events-none absolute bottom-[6%] right-[-12%] w-[90%] opacity-30 lg:right-[-4%] lg:w-[62%]">
+            <img decoding="async" src={teamCar(d.teamId, 400)} alt="" onError={() => setCarOk(false)} className="w-full" />
+          </div>
+        )
+      )}
+      {/* phones: the photo runs under the text — the asphalt rises from the left so it stays legible */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 sm:hidden" style={{ background: 'linear-gradient(90deg, var(--c-bg) 30%, transparent 85%)' }} />
+
+      <div className="relative mx-auto max-w-7xl px-4 pb-10 pt-6 md:px-6 md:pb-16 lg:min-h-[560px]">
+        <Link to="/standings" className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-muted hover:text-ink">
+          <ArrowLeft className="h-4 w-4" aria-hidden /> Таблиця лідерів
         </Link>
-        <div className="grid items-end gap-8 lg:grid-cols-[1fr_1.1fr]">
-          <motion.div variants={stagger(0.08)} initial="hidden" animate="show">
+        <div className="max-w-xl">
+          <motion.div variants={stagger(0.03)} initial="hidden" animate="show">
             <motion.div variants={fadeUp} className="flex items-center gap-3">
-              {logoOk && <img src={teamLogo(d.teamId)} alt={team.name} onError={() => setLogoOk(false)} className="h-7 w-auto" />}
-              <span className="text-sm font-bold uppercase tracking-[0.2em] text-ink/80">{team.fullName}</span>
+              {/* the logo in the theme's ink: black on paper, white on asphalt */}
+              {logoOk && (
+                <>
+                  <img decoding="async" src={teamLogo(d.teamId, 128, 'black')} alt={team.name} onError={() => setLogoOk(false)} className="h-7 w-auto dark:hidden" />
+                  <img decoding="async" src={teamLogo(d.teamId, 128, 'white')} alt={team.name} onError={() => setLogoOk(false)} className="hidden h-7 w-auto dark:block" />
+                </>
+              )}
+              <span className="text-[15px] font-semibold text-ink/85">{team.fullName}</span>
             </motion.div>
-            <motion.div variants={fadeUp} className="mt-4 text-2xl font-light md:text-3xl">
+            <motion.p variants={fadeUp} className="mt-5 text-2xl font-normal text-ink/90 md:text-3xl">
               {d.firstName}
-            </motion.div>
-            <motion.h1 variants={fadeUp} className="display text-6xl md:text-8xl">
+            </motion.p>
+            <motion.h1 variants={fadeUp} className="display -mt-1 text-[clamp(3.25rem,9vw,7rem)] leading-[0.95]">
               {d.lastName}
             </motion.h1>
-            <motion.div variants={fadeUp} className="mt-5 flex flex-wrap items-center gap-3">
-              <span className="flex items-center gap-2 rounded-full bg-ink/10 px-3 py-1.5 text-sm font-bold">
+            {/* static metadata as plain text — no pill containers */}
+            <motion.p variants={fadeUp} className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-base font-semibold">
+              <span className="inline-flex items-center gap-2">
                 <Flag code={d.country} className="h-5 w-5 ring-0" /> {BIOS[code]?.birthplace.split(',').pop()?.trim()}
               </span>
-              <span className="rounded-full px-3 py-1.5 font-mono text-sm font-bold text-black" style={{ background: team.color }}>
-                #{d.number}
+              <span aria-hidden className="text-muted">
+                ·
               </span>
-              {d.rookie && <span className="rounded-full bg-ink px-3 py-1.5 text-xs font-bold uppercase text-bg">rookie</span>}
-            </motion.div>
-            <motion.div variants={fadeUp} className="mt-8 flex gap-8">
+              <span className="inline-flex items-center gap-2">
+                <span aria-hidden className="h-4 w-1 -skew-x-12" style={{ background: team.color }} />
+                <span className="digits">#{d.number}</span>
+              </span>
+              {d.rookie && (
+                <>
+                  <span aria-hidden className="text-muted">
+                    ·
+                  </span>
+                  <span>Новачок</span>
+                </>
+              )}
+            </motion.p>
+            <motion.dl variants={fadeUp} className="mt-8 flex gap-10">
               <div>
-                <div className="text-xs font-bold uppercase tracking-[0.2em] text-muted">У чемпіонаті</div>
-                <div className="display text-5xl">P{position}</div>
+                <dt className="text-sm text-muted">У чемпіонаті</dt>
+                <dd className="digits mt-1 text-5xl font-bold leading-none md:text-6xl">P{position}</dd>
               </div>
               <div>
-                <div className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Очки {SEASON}</div>
-                <div className="display text-5xl">{points}</div>
+                <dt className="text-sm text-muted">Очки {SEASON}</dt>
+                <dd className="mt-1 text-5xl font-bold leading-none md:text-6xl">
+                  <RollingNumber value={points} />
+                </dd>
               </div>
-            </motion.div>
+            </motion.dl>
           </motion.div>
-          {carOk && (
-            <motion.img
-              src={teamCar(d.teamId, 400)}
-              alt={`${team.name} ${SEASON}`}
-              onError={() => setCarOk(false)}
-              initial={{ opacity: 0, x: 120 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
-              className="w-full drop-shadow-[0_24px_30px_rgba(0,0,0,0.6)]"
-            />
-          )}
         </div>
       </div>
     </section>
@@ -168,74 +225,24 @@ function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
-/** Finishing position per round: taller bar = better result; DNF shown as a red stub. */
-function SeasonResults({ code }: { code: string }) {
-  const { results } = getDriverStats(code).season;
-  const team = TEAM_BY_ID[DRIVER_BY_CODE[code].teamId];
-  const [hover, setHover] = useState<number | null>(null);
-  if (!results.length) return null;
-  const MAXP = 22;
-  const active = hover !== null ? results[hover] : null;
-
-  return (
-    <section>
-      <SectionTitle kicker={`Сезон ${SEASON}`} title="Результати по етапах" />
-      <div className="card p-5">
-        <div className="mb-3 flex h-6 items-center justify-between text-sm">
-          {active ? (
-            <span className="flex items-center gap-2">
-              <Flag code={active.countryCode} className="h-4 w-4 ring-0" />
-              <b>R{active.round} · {active.country}</b>
-              <span className="text-muted">
-                {active.position ? `P${active.position}` : 'DNF'} · старт P{active.grid} · {active.points} очк.
-              </span>
-            </span>
-          ) : (
-            <span className="text-muted">Наведи на стовпчик, щоб побачити деталі</span>
-          )}
-        </div>
-        <div className="flex h-48 items-end gap-1 sm:gap-1.5">
-          {results.map((r, i) => {
-            const h = r.position ? ((MAXP + 1 - r.position) / MAXP) * 100 : 6;
-            return (
-              <div
-                key={r.round}
-                className="flex h-full flex-1 cursor-pointer flex-col justify-end"
-                onMouseEnter={() => setHover(i)}
-                onMouseLeave={() => setHover(null)}
-              >
-                <span className={cn('mb-1 text-center font-mono text-xs font-bold transition', hover === i ? 'opacity-100' : 'opacity-60')}>
-                  {r.position ? `P${r.position}` : 'DNF'}
-                </span>
-                <motion.div
-                  initial={{ height: 0 }}
-                  whileInView={{ height: `${h}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: i * 0.03, ease: 'easeOut' }}
-                  className="w-full rounded-t"
-                  style={{ background: r.position === null ? 'var(--c-accent)' : team.color, opacity: hover === null || hover === i ? 1 : 0.4 }}
-                />
-                <span className="mt-1 text-center font-mono text-xs text-muted">{r.label}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Biography({ code }: { code: string }) {
+function Biography({ code, media }: { code: string; media?: DriverMedia }) {
   const d = DRIVER_BY_CODE[code];
   const team = TEAM_BY_ID[d.teamId];
   const bio = BIOS[code];
-  const [photoOk, setPhotoOk] = useState(true);
+  const story = BIO_STORIES[code] ?? [];
   return (
-    <section className="grid items-stretch gap-8 lg:grid-cols-[1.2fr_1fr]">
-      <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+    <section className="grid items-start gap-8 lg:grid-cols-[1.2fr_1fr] lg:gap-12">
+      <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
         <SectionTitle kicker="Біографія" title={`${d.firstName} ${d.lastName}`} />
-        <p className="text-lg leading-relaxed">{bio.summary}</p>
-        <div className="mt-4 flex items-center gap-2 text-sm text-muted">
+        {/* summary + the longer story: plain paragraphs, the reading style */}
+        <div className="prose-body">
+          {[bio.summary, ...story].map((p) => (
+            <p key={p} className="prose-p">
+              {p}
+            </p>
+          ))}
+        </div>
+        <div className="mt-6 flex items-center gap-2 text-sm text-muted">
           <MapPin className="h-4 w-4" /> {bio.birthplace} · {bio.born}
         </div>
         <ul className="mt-6 space-y-3">
@@ -245,7 +252,7 @@ function Biography({ code }: { code: string }) {
               initial={{ opacity: 0, x: -10 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.15 + i * 0.08 }}
+              transition={{ duration: 0.2, delay: 0.1 + i * 0.03 }}
               className="flex items-center gap-3"
             >
               <span className="h-2 w-6 rounded-full" style={{ background: team.color }} />
@@ -255,30 +262,27 @@ function Biography({ code }: { code: string }) {
         </ul>
       </motion.div>
 
+      {/* real photos of the driver (backend media; mock = the formula1.com driver-page carousel) */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        whileInView={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="relative min-h-[380px] overflow-hidden rounded-lg"
-        style={{ background: `radial-gradient(circle at 50% 35%, ${team.color}, color-mix(in srgb, ${team.color} 33%, transparent) 55%, var(--c-surface) 100%)` }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className="lg:sticky lg:top-24 lg:pt-2"
       >
-        <span className="display absolute left-5 top-3 text-[120px] leading-none text-black/15">{d.number}</span>
-        <div className="speed-stripes absolute bottom-8 left-0 h-2 w-1/2 opacity-60" />
-        {photoOk && (
-          <img
-            src={driverPhoto(code, '4col')}
-            alt={`${d.firstName} ${d.lastName}`}
-            onError={() => setPhotoOk(false)}
-            className="absolute bottom-0 left-1/2 h-[95%] -translate-x-1/2 object-contain object-bottom drop-shadow-[0_20px_30px_rgba(0,0,0,0.45)]"
-          />
-        )}
-        <div className="absolute bottom-4 right-4 rounded-lg bg-black/50 px-3 py-2 text-right text-white">
-          <div className="text-xs uppercase tracking-[0.2em] text-white/60">{team.name}</div>
-          <div className="font-bold">
-            {d.firstName} {d.lastName}
-          </div>
-        </div>
+        <PhotoCarousel
+          photos={media?.photos ?? []}
+          label={`Фото: ${d.firstName} ${d.lastName}`}
+          accent={team.color}
+          className="w-full"
+          frameClassName="aspect-[16/10] lg:aspect-[4/3]"
+          frameStyle={{ background: `linear-gradient(135deg, color-mix(in srgb, ${team.color} 70%, var(--c-bg)), var(--c-surface-2))` }}
+          backdrop={
+            <span aria-hidden className="display-wide absolute -bottom-4 right-3 select-none text-[9rem] leading-none text-white/15">
+              {d.number}
+            </span>
+          }
+        />
       </motion.div>
     </section>
   );

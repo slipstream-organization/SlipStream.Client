@@ -148,7 +148,7 @@ function ChanceCard({ d, m, scale, delay, small }: { d: TitleChance; m: TitleMat
           style={{ background: `linear-gradient(165deg, ${color}, color-mix(in srgb, ${color} 35%, transparent) 75%, transparent)` }}
         >
           <span className={cn('absolute left-3 top-1 font-sport font-black italic leading-none text-black/15', small ? 'text-5xl' : 'text-7xl')}>{driver.number}</span>
-          <img
+          <img decoding="async"
             src={driverPhoto(d.code, '4col')}
             alt={`${driver.firstName} ${driver.lastName}`}
             loading="lazy"
@@ -189,12 +189,12 @@ function ReachBar({ points, max, leader, scale, color, out }: { points: number; 
     <div className="relative h-2 rounded-full bg-surface-2" title={`${points} очок, максимум ${max}, лідер ${leader}`}>
       <motion.div
         className="absolute inset-y-0 left-0 rounded-full"
-        style={{ background: `repeating-linear-gradient(-45deg, ${color}66 0 3px, transparent 3px 6px)` }}
-        initial={{ width: 0 }}
-        animate={{ width: share(max) }}
+        style={{ background: `repeating-linear-gradient(-45deg, ${color}66 0 3px, transparent 3px 6px)`, width: share(max), transformOrigin: 'left' }}
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
       />
-      <motion.div className="absolute inset-y-0 left-0 rounded-full" style={{ background: color }} initial={{ width: 0 }} animate={{ width: share(points) }} transition={{ duration: 0.8, ease: 'easeOut' }} />
+      <motion.div className="absolute inset-y-0 left-0 rounded-full" style={{ background: color, width: share(points), transformOrigin: 'left' }} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.8, ease: 'easeOut' }} />
       <span className={cn('absolute -inset-y-1 w-0.5 rounded-full', out ? 'bg-f1-red' : 'bg-ink')} style={{ left: share(leader) }} />
     </div>
   );
@@ -222,7 +222,7 @@ function ForecastView({ table, history }: { table: StandingRow[]; history: Stand
       <div className="mb-6 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         {/* favourite */}
         <div className="relative overflow-hidden rounded-lg p-6 text-black" style={{ background: `linear-gradient(110deg, ${favColor}, ${favColor}aa 60%, ${favColor}55)` }}>
-          <img
+          <img decoding="async"
             src={driverPhoto(fav.code, '4col')}
             alt=""
             onError={(e) => (e.currentTarget.style.display = 'none')}
@@ -256,9 +256,10 @@ function ForecastView({ table, history }: { table: StandingRow[]; history: Stand
                 <span className="w-28 shrink-0 truncate font-bold">{d.label}</span>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
                   <motion.div
-                    className="h-full rounded-full bg-f1-red"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(d.p / (maxDecided || 1)) * 100}%` }}
+                    className="h-full origin-left rounded-full bg-f1-red"
+                    style={{ width: `${(d.p / (maxDecided || 1)) * 100}%` }}
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
                     transition={{ duration: 0.7, delay: i * 0.08 }}
                   />
                 </div>
@@ -284,7 +285,7 @@ function ForecastView({ table, history }: { table: StandingRow[]; history: Stand
                 <div className="truncate text-xs text-muted">{TEAM_BY_ID[driver.teamId].name}</div>
               </div>
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface-2">
-                <motion.div className="h-full rounded-full" style={{ background: color }} initial={{ width: 0 }} animate={{ width: `${Math.max(0.5, d.title * 100)}%` }} transition={{ duration: 0.9, delay: i * 0.06, ease: 'easeOut' }} />
+                <motion.div className="h-full rounded-full" style={{ background: color, width: `${Math.max(0.5, d.title * 100)}%`, transformOrigin: 'left' }} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.9, delay: i * 0.06, ease: 'easeOut' }} />
               </div>
               <span className="w-16 text-right font-mono text-lg font-bold">{pct(d.title, d.code)}</span>
             </div>

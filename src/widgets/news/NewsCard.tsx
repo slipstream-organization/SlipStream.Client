@@ -14,10 +14,12 @@ type Variant = 'lead' | 'standard' | 'line';
 
 const date = (iso: string) => new Date(iso).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
 
-/** The story's colour: team of the first driver it is about, its own accent, or F1 red. */
+/** The story's colour: team of the first driver it is about, else its first team, its own accent, or F1 red. */
 export function storyColor(item: NewsItem) {
-  const d = item.drivers?.[0] ? DRIVER_BY_CODE[item.drivers[0]] : undefined;
-  return { driver: d, color: d ? TEAM_BY_ID[d.teamId].color : item.accent ?? '#e10600' };
+  const code = item.relatedDriverIds?.[0];
+  const d = code ? DRIVER_BY_CODE[code] : undefined;
+  const team = d ? TEAM_BY_ID[d.teamId] : item.relatedTeamIds?.[0] ? TEAM_BY_ID[item.relatedTeamIds[0]] : undefined;
+  return { driver: d, color: team?.color ?? item.accent ?? '#e10600' };
 }
 
 /**
@@ -45,22 +47,22 @@ function Art({ item, big }: { item: NewsItem; big?: boolean }) {
         </span>
       )}
       {item.image?.kind === 'photo' && (
-        <img src={item.image.src} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-[1.04]" />
+        <img decoding="async" src={item.image.src} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-[1.04]" />
       )}
       {item.image?.kind === 'car' && (
-        <img
+        <img decoding="async"
           src={item.image.src}
           alt=""
           loading="lazy"
           onError={(e) => (e.currentTarget.style.display = 'none')}
           className={cn(
-            'absolute object-contain drop-shadow-[0_18px_22px_var(--c-shadow)] motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out group-hover:-translate-x-[4%]',
-            big ? 'bottom-[36%] right-[-8%] w-[72%] md:bottom-[18%]' : 'bottom-[12%] right-[-10%] w-[92%]',
+            'absolute object-contain drop-shadow-[0_10px_28px_rgba(0,0,0,0.07)] motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out group-hover:-translate-x-[4%]',
+            big ? 'bottom-[36%] right-[-8%] w-[72%] md:bottom-[18%]' : 'bottom-[9%] right-[-6%] w-[150%] max-w-none',
           )}
         />
       )}
       {item.image?.kind === 'driver' && (
-        <img
+        <img decoding="async"
           src={item.image.src}
           alt=""
           loading="lazy"

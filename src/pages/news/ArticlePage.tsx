@@ -1,27 +1,27 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion, useScroll } from 'motion/react';
-import { Share2 } from 'lucide-react';
+import { Check, Link2 } from 'lucide-react';
 import { api } from '../../shared/api';
 import { useData } from '../../shared/lib/useData';
 import { DRIVER_BY_CODE, TEAM_BY_ID } from '../../shared/mock/season';
-import type { NewsBlock, NewsItem } from '../../shared/model/types';
+import type { NewsItem } from '../../shared/model/types';
 import { Skeleton, SkeletonLines } from '../../shared/ui/Skeleton';
 import { StateBlock } from '../../shared/ui/StateBlock';
 import { Button, buttonClass } from '../../shared/ui/Button';
 import { Tag } from '../../shared/ui/Tag';
 import { useToast } from '../../shared/ui/Toast';
 import { SectionTitle } from '../../shared/ui/atoms';
+import { DemoBadge, Prose } from '../../shared/ui/Prose';
 import { NewsCard, NewsCover, storyColor } from '../../widgets/news/NewsCard';
-import { onColor } from '../../shared/lib/color';
-import { cn } from '../../shared/lib/utils';
 
-const longDate = (iso: string) => new Date(iso).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' });
+const longDate = (iso: string | number) => new Date(iso).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' });
 
 /**
  * Pattern 2 — Detail / Record: one article.
- * Breadcrumbs → cover (morphs from the card via View Transition) → headline + meta →
- * a ~68-character reading column with quotes and figures → related drivers/teams → read next.
- * A red bar at the very top shows reading progress (scaleX from scroll — transform only).
+ * Just the story: cover (team colour, quote on the left, cut-out on the right; morphs from the card
+ * via View Transition) → headline, italic lead, meta → the plain text from the API (~68 characters) →
+ * related drivers/teams aside → read next. A red bar at the very top shows reading progress (scaleX).
  */
 export function ArticlePage() {
   const { slug = '' } = useParams();
@@ -40,7 +40,7 @@ export function ArticlePage() {
           description="Можливо, посилання застаріло або матеріал прибрали. Свіжі новини — на головній."
           action={
             <Link to="/#news" className={buttonClass('primary')}>
-              До новин на головній
+              Перейти до новин
             </Link>
           }
         />
@@ -49,6 +49,7 @@ export function ArticlePage() {
   }
 
   const next = pickNext(item, all.data ?? []);
+  const { color } = storyColor(item);
 
   return (
     <article>
@@ -58,30 +59,33 @@ export function ArticlePage() {
         <nav aria-label="Навігаційний ланцюжок">
           <ol className="flex flex-wrap items-center gap-2 text-sm text-muted">
             <li>
-              <Link to="/#news" className="inline-flex min-h-9 items-center font-semibold text-ink underline decoration-accent decoration-2 underline-offset-4">
+              <Link to="/#news" className="inline-flex min-h-11 items-center font-semibold text-ink underline decoration-accent decoration-2 underline-offset-4">
                 Новини
               </Link>
             </li>
             <li aria-hidden>/</li>
-            <li className="inline-flex min-h-9 items-center">{item.tag}</li>
+            <li className="inline-flex min-h-11 items-center">{item.tag}</li>
           </ol>
         </nav>
 
-        <NewsCover item={item} className="mt-3 h-[280px] sm:h-[380px] md:h-[480px]" />
+        <NewsCover item={item} className="mt-3 h-[280px] sm:h-[380px] md:h-[480px]">
+          <CoverQuote item={item} color={color} />
+        </NewsCover>
       </div>
 
       <div className="mx-auto grid max-w-7xl gap-10 px-4 pt-8 md:px-6 lg:grid-cols-12 lg:gap-8">
-        {/* main column: ~68 characters of Literata */}
-        <div className="lg:col-span-8 lg:col-start-1">
+        <div className="min-w-0 lg:col-span-8">
           <Tag>{item.tag}</Tag>
           <h1 className="headline mt-3 max-w-[22ch] text-[clamp(2rem,5vw,3.75rem)]">{item.title}</h1>
-          <p className="serif mt-5 max-w-[68ch] text-xl text-muted">{item.excerpt}</p>
+          {/* the lead: italic, a step larger than the body, full ink for contrast */}
+          <p className="lead mt-5 max-w-[60ch]">{item.lead ?? item.excerpt}</p>
+          <InlineQuote item={item} color={color} />
           <Meta item={item} />
 
-          <div className="mt-10 max-w-[68ch]">{item.body?.map((b, i) => <Block key={i} block={b} item={item} first={i === 0} />)}</div>
+          <div className="mt-10">{item.body ? <Prose text={item.body} /> : <p className="prose-body">{item.excerpt}</p>}</div>
         </div>
 
-        <aside className="lg:col-span-4">
+        <aside className="lg:col-span-4" aria-label="Пов’язане">
           <div className="space-y-10 lg:sticky lg:top-24">
             <Related item={item} />
           </div>
@@ -102,6 +106,66 @@ export function ArticlePage() {
   );
 }
 
+/**
+ * The cover's left half: the story's quote on the team-colour field (the cut-out sits on the right).
+ * A field-coloured fade keeps it legible where a car or the number runs underneath. md+ only —
+ * on phones the same quote sits under the lead (InlineQuote).
+ */
+function CoverQuote({ item, color }: { item: NewsItem; color: string }) {
+  const q = item.quotes?.[0];
+  if (!q) return null;
+  const photo = item.image?.kind === 'photo';
+  return (
+    <>
+      <div aria-hidden className="pointer-events-none absolute inset-0 hidden md:block" style={{ background: `linear-gradient(to right, ${photo ? 'rgba(0,0,0,.72)' : color} 38%, transparent 68%)` }} />
+      <figure className="absolute inset-y-0 left-0 z-10 hidden w-[54%] flex-col justify-center p-10 md:flex lg:p-14">
+        <span aria-hidden className="mb-5 block h-[3px] w-14 bg-current opacity-70" />
+        <blockquote className="quote text-[clamp(1.5rem,2.5vw,2.375rem)] leading-[1.2]">«{q.text}»</blockquote>
+        <figcaption className="mt-5 text-[0.9375rem] opacity-90">
+          <Signature item={item} />
+        </figcaption>
+      </figure>
+    </>
+  );
+}
+
+function InlineQuote({ item, color }: { item: NewsItem; color: string }) {
+  const q = item.quotes?.[0];
+  if (!q) return null;
+  return (
+    <figure className="mt-8 border-l-[3px] pl-5 md:hidden" style={{ borderColor: color }}>
+      <blockquote className="quote text-[1.375rem] leading-snug">«{q.text}»</blockquote>
+      <figcaption className="mt-3 text-[0.9375rem] text-muted">
+        <Signature item={item} />
+      </figcaption>
+    </figure>
+  );
+}
+
+/** "— Author, role" + source link, or the demo badge when the quote has no source. */
+function Signature({ item }: { item: NewsItem }) {
+  const q = item.quotes![0];
+  return (
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <span>
+        — <span className="font-semibold">{q.author}</span>
+        {q.role && <span>, {q.role}</span>}
+      </span>
+      {q.source ? (
+        q.sourceUrl ? (
+          <a href={q.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+            {q.source}
+          </a>
+        ) : (
+          <span>{q.source}</span>
+        )
+      ) : (
+        <DemoBadge />
+      )}
+    </span>
+  );
+}
+
 /** Same category first, then the most recent others. */
 function pickNext(item: NewsItem, all: NewsItem[]) {
   const others = all.filter((n) => n.id !== item.id);
@@ -111,27 +175,33 @@ function pickNext(item: NewsItem, all: NewsItem[]) {
 
 function Meta({ item }: { item: NewsItem }) {
   const toast = useToast();
-  const share = async () => {
-    const url = window.location.href;
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  // copy only — no share sheet
+  const copy = async () => {
     try {
-      if (navigator.share) {
-        await navigator.share({ title: item.title, url });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(window.location.href);
       toast('Посилання скопійовано');
-    } catch (e) {
-      // user closed the share sheet — nothing to report
-      if ((e as DOMException)?.name !== 'AbortError') toast('Не вдалося поділитися. Скопіюйте адресу зі смуги браузера.', { tone: 'error' });
+      setCopied(true);
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast('Не вдалося скопіювати. Скопіюйте адресу зі смуги браузера.', { tone: 'error' });
     }
   };
+
   return (
     <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-line py-4">
       <dl className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
         {item.author && (
           <div>
             <dt className="text-xs text-muted">Автор</dt>
-            <dd className="font-semibold">{item.author.name}</dd>
+            <dd>
+              <span className="font-semibold">{item.author.name}</span>
+              <span className="text-muted">, {item.author.role}</span>
+            </dd>
           </div>
         )}
         <div>
@@ -145,71 +215,18 @@ function Meta({ item }: { item: NewsItem }) {
           <dd className="tnum font-semibold">{item.readMinutes} хв</dd>
         </div>
       </dl>
-      <Button variant="secondary" onClick={share} className="min-h-10 px-4">
-        <Share2 className="h-4 w-4" aria-hidden /> Поділитися
+      <Button variant="secondary" onClick={copy} className="min-h-11 px-4" aria-live="polite">
+        {copied ? <Check className="h-4 w-4" aria-hidden /> : <Link2 className="h-4 w-4" aria-hidden />}
+        {copied ? 'Скопійовано' : 'Копіювати посилання'}
       </Button>
     </div>
   );
 }
 
-function Block({ block, item, first }: { block: NewsBlock; item: NewsItem; first: boolean }) {
-  switch (block.type) {
-    case 'p':
-      return <p className={cn('serif mb-6 text-[1.0625rem] leading-[1.75]', first && 'text-xl leading-[1.65]')}>{block.text}</p>;
-    case 'h2':
-      return <h2 className="display mb-4 mt-12 text-2xl md:text-3xl">{block.text}</h2>;
-    case 'quote':
-      return (
-        <blockquote className="my-12 border-l-4 border-accent pl-6">
-          <p className="serif text-2xl italic leading-snug md:text-3xl">«{block.text}»</p>
-          {block.cite && <footer className="mt-3 text-sm text-muted">{block.cite}</footer>}
-        </blockquote>
-      );
-    case 'list':
-      return (
-        <ul className="serif mb-8 space-y-3 text-[1.0625rem] leading-[1.7]">
-          {block.items.map((li) => (
-            <li key={li} className="flex gap-3">
-              <span aria-hidden className="mt-2 h-3 w-1.5 shrink-0 -skew-x-12 bg-accent" />
-              {li}
-            </li>
-          ))}
-        </ul>
-      );
-    case 'image': {
-      const { color } = storyColor(item);
-      const field = block.kind === 'car' || block.kind === 'driver';
-      return (
-        <figure className="my-12">
-          <div className={cn('chamfer relative aspect-[16/9] overflow-hidden', !field && 'bg-surface-2')} style={field ? { background: color, color: onColor(color) } : undefined}>
-            <img
-              src={block.src}
-              alt={block.alt}
-              loading="lazy"
-              onError={(e) => (e.currentTarget.style.visibility = 'hidden')}
-              className={cn(
-                'absolute',
-                block.kind === 'photo' && 'inset-0 h-full w-full object-cover',
-                block.kind === 'car' && 'inset-x-[6%] bottom-[14%] w-[88%] object-contain',
-                block.kind === 'driver' && 'bottom-0 left-1/2 h-[104%] -translate-x-1/2 object-contain object-bottom',
-              )}
-            />
-          </div>
-          {(block.caption || block.credit) && (
-            <figcaption className="mt-3 text-sm text-muted">
-              {block.caption}
-              {block.credit && <span className="ml-2 text-xs">Фото: {block.credit}</span>}
-            </figcaption>
-          )}
-        </figure>
-      );
-    }
-  }
-}
-
 function Related({ item }: { item: NewsItem }) {
-  const drivers = (item.drivers ?? []).map((c) => DRIVER_BY_CODE[c]).filter(Boolean);
-  const teams = (item.teams ?? []).map((t) => TEAM_BY_ID[t]).filter(Boolean);
+  const drivers = (item.relatedDriverIds ?? []).map((c) => DRIVER_BY_CODE[c]).filter(Boolean);
+  const teamIds = item.relatedTeamIds?.length ? item.relatedTeamIds : [...new Set(drivers.map((d) => d.teamId))];
+  const teams = teamIds.map((t) => TEAM_BY_ID[t]).filter(Boolean);
   if (!drivers.length && !teams.length && !item.tags?.length) return null;
   return (
     <>
@@ -218,12 +235,12 @@ function Related({ item }: { item: NewsItem }) {
           <h2 id="related-drivers" className="display-narrow border-b-2 border-rule pb-2 text-lg">
             Пілоти в матеріалі
           </h2>
-          <ul>
+          <ul className="mt-3 overflow-hidden rounded-md border border-line bg-surface [&>li:last-child>a]:border-b-0">
             {drivers.map((d) => (
               <li key={d.code}>
-                <Link to={`/drivers/${d.code}`} className="group grid min-h-12 grid-cols-[4px_2.5rem_1fr_auto] items-center gap-3 border-b border-line py-2 hover:bg-surface-2">
+                <Link to={`/drivers/${d.code}`} className="group grid min-h-12 grid-cols-[4px_2.5rem_1fr_auto] items-center gap-3 border-b border-line py-2 pr-3 hover:bg-surface-2">
                   <span aria-hidden className="h-8 w-1 origin-left motion-safe:transition-transform motion-safe:duration-200 group-hover:scale-x-[2.5]" style={{ background: TEAM_BY_ID[d.teamId].color }} />
-                  <span className="tnum text-sm text-muted">#{d.number}</span>
+                  <span className="digits text-sm text-muted">#{d.number}</span>
                   <span className="font-semibold">
                     {d.firstName} {d.lastName}
                   </span>

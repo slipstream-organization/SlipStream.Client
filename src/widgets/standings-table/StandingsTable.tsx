@@ -166,7 +166,7 @@ export const StandingsTable: React.FC = () => {
                     <td className="py-4 px-6 font-bold text-lg">{driver.position}</td>
                     <td className="py-4 px-6 flex items-center gap-3">
                       {driver.headshot_url ? (
-                        <img src={driver.headshot_url} alt={driver.full_name} className="w-10 h-10 rounded-full object-cover bg-surface-2" />
+                        <img decoding="async" src={driver.headshot_url} alt={driver.full_name} className="w-10 h-10 rounded-full object-cover bg-surface-2" />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-surface-2" />
                       )}

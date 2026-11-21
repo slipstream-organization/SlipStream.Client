@@ -28,9 +28,19 @@ export function LiveTiming({ ev, demo }: { ev: RaceEvent; demo?: boolean }) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [gapMode, setGapMode] = useState<GapMode>('interval');
   const last = useRef<number | null>(null);
+  // the per-frame clock only runs while the block is on screen (it re-renders the tower and the map)
+  const root = useRef<HTMLElement>(null);
+  const [onScreen, setOnScreen] = useState(true);
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setOnScreen(e.isIntersecting), { rootMargin: '100px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
-    if (!playing) return;
+    if (!playing || !onScreen) return;
     let raf = 0;
     const tick = (now: number) => {
       const dt = last.current === null ? 0 : Math.min(0.1, (now - last.current) / 1000);
@@ -43,7 +53,7 @@ export function LiveTiming({ ev, demo }: { ev: RaceEvent; demo?: boolean }) {
       cancelAnimationFrame(raf);
       last.current = null;
     };
-  }, [playing, speed, end]);
+  }, [playing, onScreen, speed, end]);
 
   const timing = useMemo(() => timingAt(race, t), [race, t]);
   // the tower updates a few times a second, like a real timing screen
@@ -63,7 +73,7 @@ export function LiveTiming({ ev, demo }: { ev: RaceEvent; demo?: boolean }) {
   };
 
   return (
-    <section>
+    <section ref={root}>
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <h2 className="display text-3xl">Live Timing</h2>
         <span className="flex items-center gap-1.5 rounded-full bg-f1-red px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.18em] text-on-accent">

@@ -4,7 +4,8 @@ import { CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, Poin
 import type { StandingsHistory } from '../../shared/model/types';
 import { useThemeVars } from '../../shared/lib/themeVars';
 
-const CHART_VARS = { ink: '--c-ink', muted: '--c-muted', grid: '--c-line', surface: '--c-surface', tooltip: '--c-surface-2' } as const;
+// colours AND fonts come from the design tokens (Chart.js can't read CSS vars itself)
+const CHART_VARS = { ink: '--c-ink', muted: '--c-muted', grid: '--c-line', surface: '--c-surface', tooltip: '--c-surface-2', sans: '--font-sport', nums: '--font-mono' } as const;
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
@@ -23,7 +24,7 @@ interface Props {
 }
 
 export function StandingsChart({ history, series, mode, maxPosition }: Props) {
-  const { ink, muted, grid, surface, tooltip } = useThemeVars(CHART_VARS);
+  const { ink, muted, grid, surface, tooltip, sans, nums } = useThemeVars(CHART_VARS);
 
   const data = useMemo(
     () => ({
@@ -54,7 +55,7 @@ export function StandingsChart({ history, series, mode, maxPosition }: Props) {
     plugins: {
       legend: {
         position: 'bottom',
-        labels: { color: ink, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 16, font: { family: 'Inter', weight: 'bold', size: 12 } },
+        labels: { color: ink, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 16, font: { family: sans, weight: 'bold', size: 13 } },
       },
       tooltip: {
         backgroundColor: tooltip,
@@ -63,8 +64,8 @@ export function StandingsChart({ history, series, mode, maxPosition }: Props) {
         borderColor: grid,
         borderWidth: 1,
         padding: 10,
-        titleFont: { family: 'Inter', weight: 'bold' },
-        bodyFont: { family: 'JetBrains Mono' },
+        titleFont: { family: sans, weight: 'bold', size: 13 },
+        bodyFont: { family: nums, size: 12 },
         itemSort: (a, b) => (mode === 'points' ? (b.parsed.y ?? 0) - (a.parsed.y ?? 0) : (a.parsed.y ?? 0) - (b.parsed.y ?? 0)),
         callbacks: {
           label: (c) => ` ${c.dataset.label}: ${mode === 'points' ? `${c.parsed.y} pts` : `P${c.parsed.y}`}`,
@@ -72,16 +73,16 @@ export function StandingsChart({ history, series, mode, maxPosition }: Props) {
       },
     },
     scales: {
-      x: { grid: { color: grid }, ticks: { color: muted, font: { family: 'JetBrains Mono', size: 11 } }, border: { display: false } },
+      x: { grid: { color: grid }, ticks: { color: muted, font: { family: nums, size: 12 } }, border: { display: false } },
       y:
         mode === 'points'
-          ? { beginAtZero: true, grid: { color: grid }, ticks: { color: muted, font: { family: 'JetBrains Mono', size: 11 } }, border: { display: false } }
+          ? { beginAtZero: true, grid: { color: grid }, ticks: { color: muted, font: { family: nums, size: 12 } }, border: { display: false } }
           : {
               reverse: true,
               min: 1,
               max: Math.min(maxPosition, Math.max(3, ...series.flatMap((s) => history.series[s.id].positions)) + 1),
               grid: { color: grid },
-              ticks: { color: muted, stepSize: 1, callback: (v) => `P${v}`, font: { family: 'JetBrains Mono', size: 11 } },
+              ticks: { color: muted, stepSize: 1, callback: (v) => `P${v}`, font: { family: nums, size: 12 } },
               border: { display: false },
             },
     },

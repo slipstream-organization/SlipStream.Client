@@ -24,7 +24,7 @@ export function useNow(intervalMs = 1000) {
 function Digit({ value }: { value: string }) {
   return (
     <span className="relative inline-block h-[1em] w-[0.72em] overflow-hidden">
-      <AnimatePresence initial={false} mode="popLayout">
+      <AnimatePresence initial={false}>
         <motion.span
           key={value}
           initial={{ y: '-100%', opacity: 0 }}

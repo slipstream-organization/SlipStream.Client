@@ -20,17 +20,18 @@
   --color-team-haas: #B6BABD;
 
   /*
-   * Type — "Grand Prix Poster". All three have Cyrillic (checked against Google Fonts metadata).
-   *  - Golos Text: all UI text (labels, nav, buttons, meta) — Cyrillic-first design.
-   *  - Science Gothic: display only. Variable width (50–200%) and slant (0–10°): wide italic for
-   *    posters, normal for UI, narrow for dense data headers — one family, three voices.
-   *  - Literata: reading text (articles, standfirsts), optical sizes.
-   *  - Martian Mono: timing, points, gaps — tabular figures.
+   * Type — two families, combined everywhere (both have Cyrillic and tabular figures — checked):
+   *  - Tektur (stands in for Jaturat): squared techno — display titles, posters, all numbers.
+   *    Variable width 75–100% gives a narrow voice for dense data headers.
+   *  - Sofia Sans Condensed (stands in for Mako): condensed grotesque — UI text, news headlines,
+   *    reading text.
+   * To switch to the licensed originals: add their files under public/fonts/ and put "Jaturat" /
+   * "Mako" first in these stacks (see the @font-face block at the end of this file).
    */
-  --font-display: "Science Gothic", "Arial Narrow", system-ui, sans-serif;
-  --font-sport: "Golos Text", system-ui, sans-serif; /* UI text: drawn for Cyrillic first */
-  --font-serif: "Literata", Georgia, "Times New Roman", serif;
-  --font-mono: "Martian Mono", ui-monospace, monospace;
+  --font-display: "Tektur", "Arial Narrow", system-ui, sans-serif;
+  --font-sport: "Sofia Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-serif: "Sofia Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-mono: "Tektur", ui-monospace, monospace;
 
   /* Weights: three only — 400 / 600 / 700 (medium → 600, black/extrabold → 700) */
   --font-weight-medium: 600;
@@ -56,6 +57,14 @@
   --text-4xl--line-height: 1.1;
   --text-5xl: 3.5rem;
   --text-5xl--line-height: 1.1;
+
+  /* Reading roles (text-body / text-lead / text-caption) — rules in the Typography block below */
+  --text-body: 1.125rem; /* 18px */
+  --text-body--line-height: 1.6;
+  --text-lead: 1.375rem; /* 22px */
+  --text-lead--line-height: 1.5;
+  --text-caption: 0.8125rem; /* 13px */
+  --text-caption--line-height: 1.45;
 
   /* Radii — poster geometry: hard edges, cut corners (see .chamfer) instead of rounded boxes */
   --radius-sm: 3px;
@@ -123,7 +132,6 @@
   --c-warning: #a16207;      /* 4.8:1 */
   --c-scrim: rgba(16, 17, 20, 0.55);
   --c-shadow: rgba(16, 17, 20, 0.14);
-  --grain-opacity: 0.035;
 
   /* track map (SVG) */
   --map-sky-1: #e4edf5;
@@ -206,7 +214,6 @@
   --c-warning: #facc15;
   --c-scrim: rgba(0, 0, 0, 0.7);
   --c-shadow: rgba(0, 0, 0, 0.5);
-  --grain-opacity: 0.06;
 
   --map-sky-1: #07090c;
   --map-sky-2: #11161b;
@@ -298,17 +305,36 @@ body {
 }
 
 /*
- * Display type. Science Gothic's width + slant axes do the work:
- *  display        — section titles: bold, slanted, slightly condensed (85%), upper case
- *  display-wide   — posters / hero: 150% wide
- *  display-narrow — dense data headers: 75% wide
- *  headline       — long news headlines: same voice, sentence case (readable at 3 lines)
+ * ── Typography ─────────────────────────────────────────────────────────────────────────────────
+ * Two families (tokens --font-* above): Tektur = display + numbers, Sofia Sans Condensed = UI + text.
+ * Weights: 400 / 600 / 700 only.
+ *
+ * Roles — pick by what the text IS, never by how big it should look:
+ *  display          Tektur 700, slanted, UPPER — page & section titles
+ *  display-wide     the same at full width — posters, hero names
+ *  display-narrow   75% width, upright — dense data headers, side-panel titles
+ *  headline         Sofia 700, sentence case — news & card titles (stays readable over 3 lines)
+ *  (default)        Sofia 400, 16px / 1.55 — UI text, labels, short descriptions
+ *  prose-body       Sofia 400, 18px / 1.6, ≤ 68ch, full ink — anything read as paragraphs
+ *                   (articles, biographies). Never muted, never centred.
+ *  lead             italic 22px / 1.5, full ink — the article's standfirst under the headline
+ *  quote            italic 600 — quotes (article cover, pull quotes); the signature after it is upright
+ *  caption          italic 13px, muted — photo captions and credits
+ *  digits / tnum    numbers — digits for readouts (Tektur), tnum for numbers inside words
+ *
+ * Italic is a signal, used only for: quotes, the lead, captions, and display titles (synthesised
+ * slant). Never for UI labels or for emphasis inside API text — that text arrives plain.
+ * Bold (700): headlines, names in rosters and standings, key numbers, list lead-ins and labels.
+ * Paragraphs stay 400 — bold inside running text is not ours to add.
+ *
+ * Contrast (checked, both themes): ink on bg 17:1, muted on bg / surface / surface-2 ≥ 7:1,
+ * accent-ink on bg ≥ 5.6:1 — all AA; muted is for one-line meta only, never for paragraphs.
  */
 @utility display {
   font-family: var(--font-display);
   font-weight: 700;
-  font-style: oblique 10deg;
-  font-stretch: 85%;
+  font-style: italic; /* "italic" — Chrome synthesises a slant for it, not for "oblique <angle>" */
+  font-stretch: 92%;
   text-transform: uppercase;
   letter-spacing: -0.01em;
   line-height: 1.1;
@@ -316,46 +342,88 @@ body {
 @utility display-wide {
   font-family: var(--font-display);
   font-weight: 700;
-  font-style: oblique 10deg;
-  font-stretch: 150%;
+  font-style: italic; /* "italic" — Chrome synthesises a slant for it, not for "oblique <angle>" */
+  font-stretch: 100%;
   text-transform: uppercase;
   letter-spacing: -0.02em;
-  line-height: 0.95;
+  line-height: 0.98;
 }
 @utility display-narrow {
   font-family: var(--font-display);
   font-weight: 700;
   font-stretch: 75%;
   text-transform: uppercase;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
   line-height: 1.1;
 }
 @utility headline {
-  font-family: var(--font-display);
+  font-family: var(--font-sport);
   font-weight: 700;
-  font-style: oblique 6deg;
-  font-stretch: 110%;
-  letter-spacing: -0.015em;
-  line-height: 1.12;
+  letter-spacing: -0.005em;
+  line-height: 1.1;
   text-wrap: balance;
 }
-/* reading text: Literata with optical sizing */
+/* reading text: the condensed grotesque, a touch larger line-height for long paragraphs */
 @utility serif {
   font-family: var(--font-serif);
-  font-optical-sizing: auto;
   font-weight: 400;
   line-height: 1.6;
+  letter-spacing: 0.005em;
+}
+/* reading column (articles, bios): 18px / 1.6, ≤ 68 characters, full ink */
+@utility prose-body {
+  max-width: 68ch;
+  font-family: var(--font-serif);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  letter-spacing: 0.005em;
+  color: var(--c-ink);
+}
+@utility prose-p {
+  margin-bottom: 1.5rem;
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+/* the article's standfirst */
+@utility lead {
+  font-family: var(--font-serif);
+  font-size: var(--text-lead);
+  line-height: var(--text-lead--line-height);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--c-ink);
+  text-wrap: pretty;
+}
+/* quotes: italic 600; size comes from the context (cover vs. inline) */
+@utility quote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 600;
+  text-wrap: balance;
+}
+/* photo captions and credits */
+@utility caption {
+  font-size: var(--text-caption);
+  line-height: var(--text-caption--line-height);
+  font-style: italic;
+  color: var(--c-muted);
 }
 /* numbers mixed with words ("Етап 20 з 22", dates): UI font with tabular figures */
 @utility tnum {
   font-variant-numeric: tabular-nums;
 }
-/* pure digit readouts (timer, points, lap times): Martian Mono */
+/* pure digit readouts (timer, points, lap times): Tektur, tabular so nothing jumps */
 @utility digits {
   font-family: var(--font-mono);
-  font-stretch: 87.5%;
+  font-stretch: 88%;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
+}
+
+/* Older pages use font-mono for numbers — Tektur digits are proportional, so always tabular */
+.font-mono {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Cut-corner geometry (replaces rounded boxes) */
@@ -380,20 +448,16 @@ body {
   border-top: 2px solid var(--c-rule);
 }
 
-/* Paper / asphalt grain over the whole page — static, never animated */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  pointer-events: none;
-  opacity: var(--grain-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  mix-blend-mode: multiply;
+/*
+ * Paper / asphalt grain — a static tile in the page background. It used to be a fixed full-screen
+ * layer with mix-blend-mode, which forced the browser to re-blend the whole viewport on every
+ * scroll frame. As a background image it is rasterised once and costs nothing while scrolling.
+ */
+body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-.dark body::before {
-  mix-blend-mode: screen;
-  filter: invert(1);
+.dark body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /*
@@ -515,7 +579,7 @@ html.theme-switching::view-transition-new(root) {
 @media (prefers-reduced-motion: reduce) {
   .rolling-column { transition: none; }
   .animate-marquee,
-  .pulse-dot,
+  .pulse-dot::after,
   .animate-spin { animation: none; }
   .group:hover .group-hover\:translate-x-1 { transform: none; }
 }
@@ -528,11 +592,20 @@ html.theme-switching::view-transition-new(root) {
   animation: marquee 40s linear infinite;
 }
 
+/* "live" dot: a ring grows and fades on a pseudo-element — transform + opacity, no repaint per frame */
 @keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-accent) 60%, transparent); }
-  100% { box-shadow: 0 0 0 10px transparent; }
+  from { transform: scale(1); opacity: 0.7; }
+  to { transform: scale(3.2); opacity: 0; }
 }
 .pulse-dot {
+  position: relative;
+}
+.pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit; /* same colour as the dot */
   animation: pulse-ring 1.4s ease-out infinite;
 }
 
@@ -563,3 +636,15 @@ html.theme-switching::view-transition-new(root) {
 .glow-accent {
   background: radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--c-accent) 33%, transparent), transparent 55%);
 }
+
+/*
+ * Licensed originals (Mako, Jaturat) — not bundled. To use them: put the webfont files in
+ * public/fonts/, uncomment and adjust the src lines, then add "Mako" / "Jaturat" to the front of
+ * --font-sport / --font-display above. Check that the files contain Cyrillic, or Ukrainian text
+ * will fall back letter by letter to the stand-ins.
+ *
+ * @font-face { font-family: "Jaturat"; src: url("/fonts/Jaturat-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+ * @font-face { font-family: "Jaturat"; src: url("/fonts/Jaturat-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+ * @font-face { font-family: "Mako"; src: url("/fonts/Mako-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+ * @font-face { font-family: "Mako"; src: url("/fonts/Mako-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+ */

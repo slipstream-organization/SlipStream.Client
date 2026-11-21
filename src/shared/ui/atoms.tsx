@@ -7,7 +7,7 @@ import { cn, flagUrl } from '../lib/utils';
 
 export function Flag({ code, className }: { code: string; className?: string }) {
   return (
-    <img
+    <img decoding="async"
       src={flagUrl(code)}
       alt=""
       loading="lazy"
@@ -29,7 +29,7 @@ export function DriverBadge({ code, size = 32, className }: { code: string; size
     >
       {d?.number ?? '?'}
       {src && !failed && (
-        <img
+        <img decoding="async"
           src={src}
           alt={d ? `${d.firstName} ${d.lastName}` : ''}
           loading="lazy"

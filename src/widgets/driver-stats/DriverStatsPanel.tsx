@@ -32,7 +32,7 @@ function DriverPortrait({ code }: { code: string }) {
     >
       <span className="display absolute -right-2 top-1 text-[110px] leading-none text-black/15">{d.number}</span>
       {src && !failed && (
-        <motion.img
+        <motion.img decoding="async"
           src={src}
           alt={`${d.firstName} ${d.lastName}`}
           onError={() => setFailed(true)}

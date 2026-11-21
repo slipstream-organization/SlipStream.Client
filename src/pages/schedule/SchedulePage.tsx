@@ -33,7 +33,7 @@ export function SchedulePage() {
           <h1 className="display text-5xl md:text-7xl">Сезон {SEASON}</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-1.5 w-48 overflow-hidden rounded-full bg-surface-2">
-              <motion.div className="h-full bg-f1-red" initial={{ width: 0 }} animate={{ width: `${(doneCount / (total || 1)) * 100}%` }} transition={{ duration: 1.2, ease: 'easeOut' }} />
+              <motion.div className="h-full origin-left bg-f1-red" style={{ width: `${(doneCount / (total || 1)) * 100}%` }} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 1.2, ease: 'easeOut' }} />
             </div>
             <span className="font-mono text-xs text-muted">
               {doneCount}/{total} етапів

@@ -8,7 +8,7 @@ export function UserAvatar({ name, avatarUrl, className }: { name: string; avata
   if (avatarUrl && !broken) {
     return (
       <span className={base}>
-        <img src={avatarUrl} alt={name} referrerPolicy="no-referrer" className="h-full w-full object-cover" onError={() => setBroken(true)} />
+        <img decoding="async" src={avatarUrl} alt={name} referrerPolicy="no-referrer" className="h-full w-full object-cover" onError={() => setBroken(true)} />
       </span>
     );
   }

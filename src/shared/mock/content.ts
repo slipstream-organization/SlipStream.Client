@@ -3,10 +3,11 @@ import { driverPhoto, teamCar } from '../lib/media';
 import { ARTICLES } from './articles';
 
 
+/** Card-level data; full text, lead, quotes and authors live in articles.ts. */
 const BASE: Omit<NewsItem, 'slug'>[] = [
   {
     id: 'austin-preview',
-    drivers: ['ANT','RUS','LEC','HAM'],
+    relatedDriverIds: ['ANT','RUS','LEC','HAM'],
     image: { src: teamCar('mercedes', 400), kind: 'car' },
     title: 'Остін чекає: чи зможе хтось зупинити Антонеллі на COTA?',
     excerpt: 'Mercedes везе в Техас оновлену підлогу, а Ferrari — новий пакет для швидких поворотів першого сектора. Розбираємо, на що звернути увагу у вікенд.',
@@ -17,7 +18,7 @@ const BASE: Omit<NewsItem, 'slug'>[] = [
   },
   {
     id: 'title-maths',
-    drivers: ['ANT','RUS'],
+    relatedDriverIds: ['ANT','RUS'],
     image: { src: driverPhoto('ANT', '4col')!, kind: 'driver' },
     title: 'Математика титулу: коли Mercedes може закрити сезон',
     excerpt: 'Після Сінгапуру відрив лідера настільки великий, що чемпіонство може вирішитись уже в Мексиці. Рахуємо всі сценарії.',
@@ -28,18 +29,18 @@ const BASE: Omit<NewsItem, 'slug'>[] = [
   },
   {
     id: 'hamilton-ferrari',
-    drivers: ['HAM','LEC'],
+    relatedDriverIds: ['HAM','LEC'],
     image: { src: driverPhoto('HAM', '4col')!, kind: 'driver' },
-    title: 'Гамільтон про другий сезон у Ferrari: «Ми нарешті говоримо однією мовою»',
-    excerpt: 'Семиразовий чемпіон розповів, що змінилось у команді після перемоги в Барселоні та чому вірить у фінальну частину сезону.',
-    tag: 'Інтерв’ю',
+    title: 'Другий сезон Гамільтона у Ferrari: що змінилось після Барселони',
+    excerpt: 'Перший рік пішов на адаптацію, другий — на результат. Дивимось на сезон семиразового чемпіона через цифри.',
+    tag: 'Пілоти',
     date: '2026-10-16',
     readMinutes: 5,
     circuitId: 'catalunya',
   },
   {
     id: 'cadillac-debut',
-    drivers: ['PER','BOT'],
+    relatedDriverIds: ['PER','BOT'],
     image: { src: teamCar('cadillac', 400), kind: 'car' },
     title: 'Cadillac: перший сезон у цифрах',
     excerpt: 'Від тестів у Бахрейні до перших очок — як новачок чемпіонату адаптувався до регламенту 2026 року.',
@@ -50,7 +51,7 @@ const BASE: Omit<NewsItem, 'slug'>[] = [
   },
   {
     id: 'active-aero',
-    drivers: ['NOR','PIA'],
+    relatedDriverIds: ['NOR','PIA'],
     image: { src: teamCar('mclaren', 400), kind: 'car' },
     title: 'Активна аеродинаміка: що ми дізнались за 16 етапів',
     excerpt: 'X-mode, Z-mode і нова енергетична стратегія. Технічний розбір того, як нові правила змінили гонки.',
@@ -61,7 +62,7 @@ const BASE: Omit<NewsItem, 'slug'>[] = [
   },
   {
     id: 'singapore-review',
-    drivers: ['RUS','ANT','NOR'],
+    relatedDriverIds: ['RUS','ANT','NOR'],
     image: { src: driverPhoto('RUS', '4col')!, kind: 'driver' },
     title: 'Сінгапур: нічна гонка, дві машини безпеки і тиск до останнього кола',
     excerpt: 'Найкращі моменти Гран-прі Сінгапуру — обгони, стратегія та радіо, яке всі обговорюють.',
@@ -72,7 +73,7 @@ const BASE: Omit<NewsItem, 'slug'>[] = [
   },
   {
     id: 'rookie-watch',
-    drivers: ['LIN','LAW'],
+    relatedDriverIds: ['LIN','LAW'],
     image: { src: teamCar('racing_bulls', 400), kind: 'car' },
     title: 'Ліндблад: найкращий новачок року?',
     excerpt: 'Британський дебютант Racing Bulls регулярно потрапляє в Q3. Порівнюємо його з напарником.',
@@ -83,18 +84,18 @@ const BASE: Omit<NewsItem, 'slug'>[] = [
   },
   {
     id: 'verstappen-reset',
-    drivers: ['VER', 'HAD'],
+    relatedDriverIds: ['VER', 'HAD'],
     image: { src: driverPhoto('VER', '4col')!, kind: 'driver' },
-    title: 'Верстаппен: «Цей сезон — про те, щоб навчитися новій машині»',
-    excerpt: 'Чотириразовий чемпіон відверто про складний старт ери 2026 і про те, чому вірить у фінальну третину сезону.',
-    tag: 'Інтерв’ю',
+    title: 'Ферстаппен і нова ера: найважчий сезон чемпіона в цифрах',
+    excerpt: 'Red Bull складно стартувала в еру 2026. Дивимось, де команда втрачає і що змінилось у другій половині сезону.',
+    tag: 'Пілоти',
     date: '2026-10-06',
     readMinutes: 5,
     circuitId: 'red_bull_ring',
   },
   {
     id: 'mclaren-number-one',
-    drivers: ['NOR', 'PIA'],
+    relatedDriverIds: ['NOR', 'PIA'],
     image: { src: driverPhoto('NOR', '4col')!, kind: 'driver' },
     title: 'Норріс з номером 1: як чемпіон захищає титул у новій ері',
     excerpt: 'McLaren втратила перевагу 2025 року, але Ландо стабільно привозить очки. Розбір сезону чинного чемпіона.',
@@ -105,7 +106,7 @@ const BASE: Omit<NewsItem, 'slug'>[] = [
   },
   {
     id: 'leclerc-quali',
-    drivers: ['LEC'],
+    relatedDriverIds: ['LEC'],
     image: { src: driverPhoto('LEC', '4col')!, kind: 'driver' },
     title: 'Леклер і суботи: чому Ferrari сильніша в кваліфікаціях, ніж у гонках',
     excerpt: 'Розбираємо деградацію шин і роботу енергосистеми — і що це означає для Остіна.',
@@ -116,10 +117,10 @@ const BASE: Omit<NewsItem, 'slug'>[] = [
   },
   {
     id: 'alonso-45',
-    drivers: ['ALO', 'STR'],
+    relatedDriverIds: ['ALO', 'STR'],
     image: { src: driverPhoto('ALO', '4col')!, kind: 'driver' },
-    title: 'Алонсо в 45: «Поки я швидкий — я тут»',
-    excerpt: 'Найдосвідченіший пілот пелотону про мотивацію, Aston Martin з двигуном Honda та плани на 2027.',
+    title: 'Алонсо в 45: найдосвідченіший пілот пелотону і нова Aston Martin',
+    excerpt: 'Перший сезон Aston Martin з двигуном Honda і роль досвіду в новій ері. Розбір на цифрах сезону.',
     tag: 'Пілоти',
     date: '2026-09-29',
     readMinutes: 4,
@@ -127,10 +128,10 @@ const BASE: Omit<NewsItem, 'slug'>[] = [
   },
   {
     id: 'hadjar-promotion',
-    drivers: ['HAD', 'VER'],
+    relatedDriverIds: ['HAD', 'VER'],
     image: { src: driverPhoto('HAD', '4col')!, kind: 'driver' },
-    title: 'Хаджар у Red Bull: перший сезон поруч із Верстаппеном',
-    excerpt: 'Подіум у Монако та стабільні очки — француз виявився найкращим напарником Макса за роки.',
+    title: 'Хаджар у Red Bull: перший сезон поруч із Ферстаппеном',
+    excerpt: 'Подіум у Зандворті 2025 привів його в Red Bull. Як француз справляється з місцем поруч із Ферстаппеном.',
     tag: 'Пілоти',
     date: '2026-09-25',
     readMinutes: 5,
@@ -138,7 +139,7 @@ const BASE: Omit<NewsItem, 'slug'>[] = [
   },
   {
     id: 'sainz-williams',
-    drivers: ['SAI', 'ALB'],
+    relatedDriverIds: ['SAI', 'ALB'],
     image: { src: teamCar('williams', 400), kind: 'car' },
     title: 'Williams повертається: Сайнс і Албон тягнуть команду вгору',
     excerpt: 'Як новий регламент дав шанс одній із найтитулованіших команд в історії.',
@@ -150,7 +151,11 @@ const BASE: Omit<NewsItem, 'slug'>[] = [
 ];
 
 /** Summaries + full text merged: slug = id, body/author/tags from articles.ts. */
-export const NEWS: NewsItem[] = BASE.map((n) => ({ ...n, slug: n.id, ...ARTICLES[n.id] }));
+export const NEWS: NewsItem[] = BASE.map((n) => {
+  const a = ARTICLES[n.id];
+  // the body is built on request from live data (shared/api → newsArticle)
+  return { ...n, slug: n.id, author: a?.author, tags: a?.tags, relatedTeamIds: a?.relatedTeamIds, lead: a?.lead, quotes: a?.quotes };
+});
 
 export interface Highlight {
   id: string;

@@ -129,11 +129,16 @@ export function LapAnalysisPanel({ circuitId, myLapTime, myStyle, refLapTime, re
                 <span className="relative h-2 rounded-full bg-ink/5">
                   <span className="absolute inset-y-0 left-1/2 w-px bg-ink/30" />
                   <motion.span
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(Math.abs(s.delta) / maxAbs) * 50}%` }}
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
                     transition={{ duration: 0.6, delay: i * 0.03 }}
                     className="absolute inset-y-0 rounded-full"
-                    style={{ background: VERDICT[s.verdict].color, [s.delta >= 0 ? 'left' : 'right']: '50%' }}
+                    style={{
+                      background: VERDICT[s.verdict].color,
+                      width: `${(Math.abs(s.delta) / maxAbs) * 50}%`,
+                      [s.delta >= 0 ? 'left' : 'right']: '50%',
+                      transformOrigin: s.delta >= 0 ? 'left' : 'right',
+                    }}
                   />
                 </span>
                 <span className={cn('text-right font-mono font-bold', s.delta > 0 ? 'text-red-400' : 'text-green-400')}>{fmtDelta(s.delta)}</span>

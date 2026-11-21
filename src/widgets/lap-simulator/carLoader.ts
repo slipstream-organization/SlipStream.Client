@@ -124,7 +124,7 @@ function extractWheels(mesh: THREE.Mesh) {
     wheel.position.copy(centre);
     wheel.userData.axis = axis;
     wheel.userData.role = 'tyre';
-    wheel.castShadow = true;
+    wheel.castShadow = false;
     mesh.add(wheel);
   }
   const remaining = subGeometry(geo, rest, vi, new THREE.Vector3());
@@ -143,7 +143,7 @@ function template(spec: CarModelSpec): Promise<THREE.Group> {
       model.traverse((o) => {
         const m = o as THREE.Mesh;
         if (!m.isMesh) return;
-        m.castShadow = true;
+        m.castShadow = false; // cars use blob shadows (TrackScene), not the static shadow map
         m.receiveShadow = true;
         const mat = m.material as THREE.Material;
         m.userData.role = roleOf(spec.url, mat);
@@ -237,7 +237,7 @@ export async function loadCar(spec: CarModelSpec, ghost = false): Promise<CarIns
       materials.push(mat);
     }
     m.material = mat;
-    m.castShadow = !ghost;
+    m.castShadow = false;
   });
   return { object, wheels, dispose: () => materials.forEach((m) => m.dispose()) };
 }

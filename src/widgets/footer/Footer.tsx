@@ -15,9 +15,9 @@ export function Footer() {
         <FooterCol title="Сезон" links={[['Гран-прі', '/races'], ['Таблиця лідерів', '/standings'], ['Битва за титул', '/championship']]} />
         <FooterCol title="Гра" links={[['Прогнози', '/game'], ['Бінго', '/game#bingo'], ['Профіль', '/profile']]} />
       </div>
-      {/* the wordmark is sized to the container width (10 capitals ≈ 10–12em at 150%), so it always fits */}
+      {/* the wordmark is sized to the container width ("SLIPSTREAM" measures 6.16em in Tektur Bold), so it always fits */}
       <div className="mx-auto max-w-7xl px-4 [container-type:inline-size] md:px-6">
-        <div aria-hidden className="display-wide select-none whitespace-nowrap text-[calc(100cqi/12)] leading-[0.9] opacity-95">
+        <div aria-hidden className="display-wide select-none whitespace-nowrap text-[calc(100cqi/6.7)] leading-[0.9] opacity-95">
           SlipStream
         </div>
       </div>

@@ -58,7 +58,7 @@ function PickCard({ icon, title, odds, value, delay }: { icon: React.ReactNode; 
         </div>
       </Link>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2">
-        <motion.div className="h-full rounded-full" style={{ background: team.color }} initial={{ width: 0 }} whileInView={{ width: pct(value) }} viewport={{ once: true }} transition={{ duration: 0.9, delay: delay + 0.1 }} />
+        <motion.div className="h-full rounded-full" style={{ background: team.color, width: pct(value), transformOrigin: 'left' }} initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ duration: 0.9, delay: delay + 0.1 }} />
       </div>
     </motion.div>
   );

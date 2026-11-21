@@ -177,12 +177,12 @@ function NextRacePoster() {
 
 /**
  * Font size that fits the longest word of `text` on one line of its container (needs an ancestor
- * with container-type: inline-size). Science Gothic at 150% width is ≈1–1.2em per capital (W, M widest), so
+ * with container-type: inline-size). Tektur Bold capitals measure 0.66em on average, 1em at the widest (Щ, W), so
  * words wrap between each other but are never split.
  */
 function fitWords(text: string, maxRem: number) {
   const longest = Math.max(...text.split(/\s+/).map((w) => w.length), 4);
-  return `min(${maxRem}rem, calc(100cqi / ${(longest * 1.2).toFixed(2)}))`;
+  return `min(${maxRem}rem, calc(100cqi / ${(longest * 0.8).toFixed(2)}))`;
 }
 
 function Fact({ label, value, mono, wide }: { label: string; value: string; mono?: boolean; wide?: boolean }) {

@@ -2,8 +2,11 @@
  * Data access layer. Everything is mocked for now — each function is async so
  * it can be replaced 1:1 with real HTTP calls (axios) once the backend exists.
  */
-import type { RaceEvent, StandingRow, StandingsHistory, TeamId } from '../model/types';
-import { CALENDAR, DRIVERS, RACES, TEAMS, isCompleted, raceStart } from '../mock/season';
+import type { ArticleContext, DriverFacts, DriverMedia, NewsItem, RaceEvent, StandingRow, StandingsHistory, TeamFacts, TeamId } from '../model/types';
+import { DRIVER_PHOTOS } from '../mock/driverMedia';
+import { driverCutout } from '../lib/media';
+import { CALENDAR, DRIVERS, DRIVER_BY_CODE, RACES, TEAMS, TEAM_BY_ID, isCompleted, raceStart } from '../mock/season';
+import { ARTICLES, UA_NAMES } from '../mock/articles';
 import { TEAM_HISTORY, type TeamHistory } from '../mock/teamHistory';
 import { CAREERS, type CareerBase } from '../mock/careers';
 import { generateWeekend } from '../mock/results';
@@ -155,10 +158,99 @@ export function getTeamStats(id: TeamId): TeamStats {
   return { season, history: TEAM_HISTORY[id], drivers: codes.map((code) => ({ code, points: driverPoints[code] })) };
 }
 
-export const driverNews = (code: string) => NEWS.filter((n) => n.drivers?.includes(code));
+export const driverNews = (code: string) => NEWS.filter((n) => n.relatedDriverIds?.includes(code));
+
+/** Ukrainian plural: "1 очко", "3 очки", "5 очок". */
+function plural(count: number, one: string, few: string, many: string) {
+  const a = Math.abs(count) % 100, b = a % 10;
+  const word = a > 10 && a < 20 ? many : b === 1 ? one : b >= 2 && b <= 4 ? few : many;
+  return `${count} ${word}`;
+}
+
+/** Driver media: official season cut-out + the driver-page photo carousel (mock → backend later). */
+function driverMedia(code: string): DriverMedia {
+  const d = DRIVER_BY_CODE[code];
+  const p = DRIVER_PHOTOS[code];
+  const name = d ? `${d.firstName} ${d.lastName}` : code;
+  return {
+    cutout: driverCutout(code),
+    photos: (p?.photos ?? []).map((src, i, all) => ({
+      src,
+      alt: `${name}, фото ${i + 1} з ${all.length}`,
+      credit: 'Formula 1 / Getty Images',
+      sourceUrl: `https://www.formula1.com/en/drivers/${p!.page}`,
+    })),
+  };
+}
+
+/** The live numbers article copy is written against — same source as the standings tables. */
+function articleContext(): ArticleContext {
+  const drivers = computeStandings('drivers').table;
+  const teams = computeStandings('constructors').table;
+  const byDriver = Object.fromEntries(drivers.map((r) => [r.id, r]));
+  const byTeam = Object.fromEntries(teams.map((r) => [r.id, r]));
+  const roundsDone = completedRaces().length;
+  const roundsLeft = RACES.length - roundsDone;
+  const empty: StandingRow = { id: '', position: 0, points: 0, wins: 0, podiums: 0 };
+
+  const driver = (code: string): DriverFacts => {
+    const d = DRIVER_BY_CODE[code];
+    const r = byDriver[code] ?? empty;
+    const mate = DRIVERS.find((x) => x.teamId === d.teamId && x.code !== code);
+    const [name, last] = UA_NAMES[code] ?? [`${d.firstName} ${d.lastName}`, d.lastName];
+    return {
+      code,
+      name,
+      last,
+      teamId: d.teamId,
+      team: TEAM_BY_ID[d.teamId].name,
+      pos: r.position,
+      pts: r.points,
+      wins: r.wins,
+      podiums: r.podiums,
+      gap: (drivers[0]?.points ?? 0) - r.points,
+      mate: mate ? (UA_NAMES[mate.code]?.[0] ?? mate.lastName) : '',
+      vsMate: r.points - ((mate && byDriver[mate.code]?.points) || 0),
+    };
+  };
+  const team = (id: TeamId): TeamFacts => {
+    const r = byTeam[id] ?? empty;
+    return { id, name: TEAM_BY_ID[id].name, pos: r.position, pts: r.points, wins: r.wins, podiums: r.podiums, gap: (teams[0]?.points ?? 0) - r.points };
+  };
+  const race = (circuitId: string) => {
+    const ev = RACES.find((r) => r.circuitId === circuitId && isCompleted(r));
+    if (!ev) return undefined;
+    const podium = generateWeekend(ev.round)
+      .race.filter((r) => r.position && r.position <= 3)
+      .sort((a, b) => (a.position ?? 99) - (b.position ?? 99))
+      .map((r) => driver(r.driverCode));
+    return { round: ev.round, country: ev.country, podium };
+  };
+  return {
+    season: RACES[0] ? new Date(RACES[0].startDate).getUTCFullYear() : new Date().getFullYear(),
+    roundsDone,
+    roundsLeft,
+    maxLeft: roundsLeft * 25,
+    driver,
+    team,
+    leader: driver(drivers[0]?.id ?? DRIVERS[0].code),
+    second: driver(drivers[1]?.id ?? DRIVERS[1].code),
+    race,
+    n: plural,
+  };
+}
+
+/** Full article: the mock writes its Markdown against live standings; the API will just send the text. */
+function buildArticle(slug: string): NewsItem | null {
+  const item = NEWS.find((n) => n.slug === slug);
+  if (!item) return null;
+  const spec = ARTICLES[item.id];
+  return { ...item, body: spec ? spec.build(articleContext()).join('\n\n') : undefined };
+}
 
 export const api = {
   driverStats: (code: string) => delay(getDriverStats(code), 60),
+  driverMedia: (code: string) => delay(driverMedia(code), 60),
   calendar: () => delay(CALENDAR),
   nextRace: () => delay(getNextRace()),
   lastRace: () => delay(getLastRace()),
@@ -166,7 +258,7 @@ export const api = {
   result: (round: number) => delay(getResult(round)),
   news: () => delay(NEWS),
   /** Full article by slug; null when it does not exist (the page shows a not-found state). */
-  newsArticle: (slug: string) => delay(NEWS.find((n) => n.slug === slug) ?? null),
+  newsArticle: (slug: string) => delay(buildArticle(slug)),
   driverStandings: () => delay(computeStandings('drivers')),
   constructorStandings: () => delay(computeStandings('constructors')),
   bingo: () => delay(BINGO.map((c) => ({ ...c, done: !!c.free || (!!c.fulfilledRound && completedRaces().some((r) => r.round === c.fulfilledRound)) }))),
