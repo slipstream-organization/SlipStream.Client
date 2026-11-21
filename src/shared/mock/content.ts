@@ -1,7 +1,9 @@
 import type { NewsItem } from '../model/types';
 import { driverPhoto, teamCar } from '../lib/media';
+import { ARTICLES } from './articles';
 
-export const NEWS: NewsItem[] = [
+
+const BASE: Omit<NewsItem, 'slug'>[] = [
   {
     id: 'austin-preview',
     drivers: ['ANT','RUS','LEC','HAM'],
@@ -146,6 +148,9 @@ export const NEWS: NewsItem[] = [
     circuitId: 'madring',
   },
 ];
+
+/** Summaries + full text merged: slug = id, body/author/tags from articles.ts. */
+export const NEWS: NewsItem[] = BASE.map((n) => ({ ...n, slug: n.id, ...ARTICLES[n.id] }));
 
 export interface Highlight {
   id: string;

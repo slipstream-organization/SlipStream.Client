@@ -19,11 +19,66 @@
   --color-team-sauber: #52E252;
   --color-team-haas: #B6BABD;
 
-  --font-sport: "Titillium Web", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /*
+   * Type — "Grand Prix Poster". All three have Cyrillic (checked against Google Fonts metadata).
+   *  - Golos Text: all UI text (labels, nav, buttons, meta) — Cyrillic-first design.
+   *  - Science Gothic: display only. Variable width (50–200%) and slant (0–10°): wide italic for
+   *    posters, normal for UI, narrow for dense data headers — one family, three voices.
+   *  - Literata: reading text (articles, standfirsts), optical sizes.
+   *  - Martian Mono: timing, points, gaps — tabular figures.
+   */
+  --font-display: "Science Gothic", "Arial Narrow", system-ui, sans-serif;
+  --font-sport: "Golos Text", system-ui, sans-serif; /* UI text: drawn for Cyrillic first */
+  --font-serif: "Literata", Georgia, "Times New Roman", serif;
+  --font-mono: "Martian Mono", ui-monospace, monospace;
+
+  /* Weights: three only — 400 / 600 / 700 (medium → 600, black/extrabold → 700) */
+  --font-weight-medium: 600;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 700;
+  --font-weight-black: 700;
+
+  /* Type scale (1.25) */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.4;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.55;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.3;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.2;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 1.15;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 1.1;
+  --text-5xl: 3.5rem;
+  --text-5xl--line-height: 1.1;
+
+  /* Radii — poster geometry: hard edges, cut corners (see .chamfer) instead of rounded boxes */
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-2xl: 10px;
+
+  /* Shadows (alpha < 0.08 in light) */
+  --shadow-soft: 0 1px 0 rgba(16, 17, 20, 0.06);
+  --shadow-float: 0 12px 32px rgba(16, 17, 20, 0.08);
+
+  /* Easing */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
 }
 
-/* Theme tokens — switch with the `.dark` class on <html> */
+/*
+ * Theme tokens — the single source of truth for every theme-dependent colour.
+ * Switch with the `.dark` class on <html>. Tailwind utilities (bg-surface, text-muted…)
+ * map to these; SVG / canvas / WebGL read them through `useThemeVars()`.
+ * Contrast (WCAG AA ≥ 4.5:1) is noted next to text colours.
+ */
 @theme inline {
   --color-bg: var(--c-bg);
   --color-surface: var(--c-surface);
@@ -31,25 +86,184 @@
   --color-ink: var(--c-ink);
   --color-muted: var(--c-muted);
   --color-line: var(--c-line);
+  --color-accent: var(--c-accent);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-accent-ink: var(--c-accent-ink);
+  --color-on-accent: var(--c-on-accent);
+  --color-positive: var(--c-positive);
+  --color-negative: var(--c-negative);
+  --color-fastest: var(--c-fastest);
+  --color-warning: var(--c-warning);
+  --color-rule: var(--c-rule);
+  /* sector colours — second palette for states, deltas and progress */
+  --color-sector-purple: var(--c-fastest);
+  --color-sector-green: var(--c-positive);
+  --color-sector-yellow: var(--c-warning);
 }
 
 :root {
-  --c-bg: #f2f2f4;
+  /* PAPER (default theme): neutral coated stock, not cream. L0 paper → L1 sheet → L2 newsprint */
+  --c-bg: #f3f3ef;
   --c-surface: #ffffff;
-  --c-surface-2: #e9e9ee;
-  --c-ink: #15151e;
-  --c-muted: #6b6b76;
-  --c-line: rgba(21, 21, 30, 0.1);
+  --c-surface-2: #e7e7e1;
+  /* text */
+  --c-ink: #101114;          /* 18:1 on paper */
+  --c-muted: #474b53;        /* graphite, 8.4:1 on paper, 7.4:1 on newsprint — never low-contrast grey */
+  --c-line: rgba(16, 17, 20, 0.12);   /* hairlines */
+  --c-rule: rgba(16, 17, 20, 0.82);   /* editorial rules: strong, not pure black */
+  /* accent: fill stays F1 red; text uses a deeper red so small labels pass AA */
+  --c-accent: #e10600;       /* white on it: 5.0:1 */
+  --c-accent-hover: #c40500;
+  --c-accent-ink: #c40500;   /* 5.6:1 on paper */
+  --c-on-accent: #ffffff;
+  /* timing / sector semantics: purple = best, green = personal best, yellow = slower */
+  --c-positive: #15803d;     /* 4.9:1 on paper */
+  --c-negative: #c40500;
+  --c-fastest: #6d28d9;      /* 6.9:1 */
+  --c-warning: #a16207;      /* 4.8:1 */
+  --c-scrim: rgba(16, 17, 20, 0.55);
+  --c-shadow: rgba(16, 17, 20, 0.14);
+  --grain-opacity: 0.035;
+
+  /* track map (SVG) */
+  --map-sky-1: #e4edf5;
+  --map-sky-2: #f6f8fa;
+  --map-grass: #d4ebc1;
+  --map-ground: #cde6b8;
+  --map-ground-edge: #b5d39d;
+  --map-wall: #93ae78;
+  --map-grid: rgba(40, 80, 30, 0.08);
+  --map-runoff: #ece6d6;
+  --map-edge: #ffffff;
+  --map-asphalt: #4b4f57;
+  --map-label: #ffffff;
+  --map-label-text: #2a2d33;
+  --map-label-icon: #6b6f78;
+  --map-shadow: rgba(30, 50, 20, 0.35);
+  --map-tooltip: #ffffff;
+  --map-tooltip-text: #15151e;
+
+  /* 3D lap scene (WebGL) — sunny afternoon */
+  --scene-sky: #6fa6dc;              /* zenith */
+  --scene-horizon: #d7e4ee;          /* haze + fog */
+  --scene-grass: #3a9a3c;
+  --scene-grass-2: #52b347;
+  --scene-runoff: #cbbd96;           /* gravel trap */
+  --scene-runoff-tarmac: #62666d;    /* asphalt run-off */
+  --scene-pitlane: #5d6169;
+  --scene-barrier: #d9dbdf;          /* concrete wall */
+  --scene-tecpro: #d22b3a;
+  --scene-board-a: #b3262e;          /* plain hoarding panels, no brands */
+  --scene-board-b: #1f3f8c;
+  --scene-fence: #2b2f36;
+  --scene-building: #eceef1;
+  --scene-roof: #aeb4bd;
+  --scene-seat-a: #2f5fa8;
+  --scene-seat-b: #3a6fbf;
+  --scene-lamp: #ff2a1a;
+  --scene-sun-intensity: 3.1;
+  --scene-asphalt: #595d65;
+  --scene-asphalt-side: #3a3d44;
+  --scene-line: #ffffff;
+  --scene-kerb-red: #d0142f;
+  --scene-kerb-white: #ffffff;
+  --scene-car: #2a2c31;
+  --scene-car-light: #4a4d55;
+  --scene-tyre: #141416;
+  --scene-pole: #8a8d94;
+  --scene-hemi-sky: #dcebff;
+  --scene-hemi-ground: #4a6a38;
+  --scene-hemi-intensity: 1.25;
+  --scene-badge: rgba(255, 255, 255, 0.92);
+  --scene-badge-ring: rgba(21, 21, 30, 0.35);
+  --scene-badge-text: #15151e;
+
+  /* Motion durations (only these four) */
+  --motion-100: 100ms;
+  --motion-150: 150ms;
+  --motion-200: 200ms;
+  --motion-300: 300ms;
+
   color-scheme: light;
 }
 
 .dark {
-  --c-bg: #0b0b0f;
-  --c-surface: #15151e;
-  --c-surface-2: #1f1f2a;
-  --c-ink: #ffffff;
-  --c-muted: #9b9ba8;
-  --c-line: rgba(255, 255, 255, 0.08);
+  /* NIGHT ASPHALT: designed, not inverted — warm-neutral ink on deep asphalt, grain a touch stronger */
+  --c-bg: #0e1013;
+  --c-surface: #171a1f;
+  --c-surface-2: #20242b;
+  --c-ink: #f4f4f1;          /* 17:1 on asphalt */
+  --c-muted: #a9aeb7;        /* 8.6:1 on asphalt, 6.4:1 on surface-2 */
+  --c-line: rgba(244, 244, 241, 0.1);
+  --c-rule: rgba(244, 244, 241, 0.38); /* softer on asphalt — pure white rules read as harsh */
+  --c-accent: #e10600;
+  --c-accent-hover: #ff1a12;
+  --c-accent-ink: #ff4d42;   /* 5.9:1 on asphalt */
+  --c-on-accent: #ffffff;
+  --c-positive: #4ade80;
+  --c-negative: #ff6b6b;
+  --c-fastest: #a78bfa;
+  --c-warning: #facc15;
+  --c-scrim: rgba(0, 0, 0, 0.7);
+  --c-shadow: rgba(0, 0, 0, 0.5);
+  --grain-opacity: 0.06;
+
+  --map-sky-1: #07090c;
+  --map-sky-2: #11161b;
+  --map-grass: #18241d;
+  --map-ground: #1b2a21;
+  --map-ground-edge: #2a3d31;
+  --map-wall: #3b5a45;
+  --map-grid: rgba(255, 255, 255, 0.04);
+  --map-runoff: #252b28;
+  --map-edge: #6a7079;
+  --map-asphalt: #2f333a;
+  --map-label: #2a2e35;
+  --map-label-text: #e8e9ec;
+  --map-label-icon: #9aa0aa;
+  --map-shadow: rgba(0, 0, 0, 0.6);
+  --map-tooltip: #15151e;
+  --map-tooltip-text: #ffffff;
+
+  /* 3D lap scene — overcast day (matches the dark UI without turning the circuit into night) */
+  --scene-sky: #3f5164;
+  --scene-horizon: #8794a0;
+  --scene-grass: #2a7a33;
+  --scene-grass-2: #36903b;
+  --scene-runoff: #8f8467;
+  --scene-runoff-tarmac: #44484f;
+  --scene-pitlane: #36393f;
+  --scene-barrier: #9a9ea5;
+  --scene-tecpro: #a8222f;
+  --scene-board-a: #7f1d25;
+  --scene-board-b: #1b2f63;
+  --scene-fence: #1c1f24;
+  --scene-building: #a9aeb6;
+  --scene-roof: #6d727b;
+  --scene-seat-a: #2c4f86;
+  --scene-seat-b: #355c99;
+  --scene-lamp: #ff2a1a;
+  --scene-sun-intensity: 1.9;
+  --scene-asphalt: #3e4249;
+  --scene-asphalt-side: #26282d;
+  --scene-line: #e9e9eb;
+  --scene-kerb-red: #b8122b;
+  --scene-kerb-white: #e6e6e8;
+  --scene-car: #17181c;
+  --scene-car-light: #34363c;
+  --scene-tyre: #0a0a0b;
+  --scene-pole: #8a8d94;
+  --scene-hemi-sky: #b9c6d3;
+  --scene-hemi-ground: #2c3a26;
+  --scene-hemi-intensity: 1.0;
+  --scene-badge: rgba(14, 14, 18, 0.88);
+  --scene-badge-ring: rgba(255, 255, 255, 0.55);
+  --scene-badge-text: #f4f4f5;
+
+  /* dark elevation: edge light instead of drop shadows */
+  --shadow-soft: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
   color-scheme: dark;
 }
 
@@ -58,14 +272,15 @@ body {
   background: var(--c-bg);
   color: var(--c-ink);
   font-family: var(--font-sport);
+  font-size: 1rem;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Circular reveal when switching theme (View Transitions API) */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
+/* One visible keyboard focus ring for the whole app */
+:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
 }
 
 ::-webkit-scrollbar {
@@ -76,25 +291,233 @@ body {
   background: var(--c-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #9b9ba8;
+  background: var(--c-muted);
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #e10600;
+  background: var(--c-accent);
 }
 
+/*
+ * Display type. Science Gothic's width + slant axes do the work:
+ *  display        — section titles: bold, slanted, slightly condensed (85%), upper case
+ *  display-wide   — posters / hero: 150% wide
+ *  display-narrow — dense data headers: 75% wide
+ *  headline       — long news headlines: same voice, sentence case (readable at 3 lines)
+ */
 @utility display {
-  font-family: var(--font-sport);
-  font-weight: 900;
-  font-style: italic;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-style: oblique 10deg;
+  font-stretch: 85%;
   text-transform: uppercase;
   letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+@utility display-wide {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-style: oblique 10deg;
+  font-stretch: 150%;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
   line-height: 0.95;
 }
+@utility display-narrow {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 75%;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+@utility headline {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-style: oblique 6deg;
+  font-stretch: 110%;
+  letter-spacing: -0.015em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+/* reading text: Literata with optical sizing */
+@utility serif {
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  line-height: 1.6;
+}
+/* numbers mixed with words ("Етап 20 з 22", dates): UI font with tabular figures */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}
+/* pure digit readouts (timer, points, lap times): Martian Mono */
+@utility digits {
+  font-family: var(--font-mono);
+  font-stretch: 87.5%;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
 
+/* Cut-corner geometry (replaces rounded boxes) */
+@utility chamfer {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+}
+@utility chamfer-sm {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+}
+@utility chamfer-tl {
+  clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+}
+
+/* A sheet on the page: hard edges, hairline frame. Pages not redesigned yet inherit this too. */
 @utility card {
   background: var(--c-surface);
   border: 1px solid var(--c-line);
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
+}
+/* Heavy editorial rule above a block */
+@utility rule-top {
+  border-top: 2px solid var(--c-rule);
+}
+
+/* Paper / asphalt grain over the whole page — static, never animated */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+.dark body::before {
+  mix-blend-mode: screen;
+  filter: invert(1);
+}
+
+/*
+ * Theme switch — a kerb sweeps across the screen: a band in the NEW theme's colour with red/white
+ * kerb edges, moving in one continuous eased sweep; the theme flips while it covers the viewport.
+ * transform-only; see ThemeProvider.
+ */
+.theme-wipe {
+  position: fixed;
+  top: -12vh;
+  bottom: -12vh;
+  left: 0;
+  width: 260vw;
+  z-index: 9999;
+  pointer-events: none;
+  will-change: transform;
+  background:
+    repeating-linear-gradient(180deg, var(--c-accent) 0 22px, #ffffff 22px 44px) left / 18px 100% no-repeat,
+    repeating-linear-gradient(180deg, var(--c-accent) 0 22px, #ffffff 22px 44px) right / 18px 100% no-repeat,
+    var(--wipe-bg);
+}
+.theme-wipe[data-to="light"] { --wipe-bg: #f3f3ef; } /* = paper --c-bg */
+.theme-wipe[data-to="dark"] { --wipe-bg: #0e1013; }  /* = asphalt --c-bg */
+
+/* Reusable interactive feedback: no scale, only opacity / 1px press */
+@utility press {
+  transition:
+    opacity var(--motion-150) var(--ease-out),
+    transform var(--motion-100) var(--ease-out),
+    background-color var(--motion-150) var(--ease-out),
+    border-color var(--motion-150) var(--ease-out),
+    color var(--motion-150) var(--ease-out);
+  &:hover { opacity: 0.88; }
+  &:active { transform: translateY(1px); }
+}
+
+/* Skeleton block (static under reduced motion) */
+@keyframes skeleton {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.skeleton {
+  background: var(--c-surface-2);
+  border-radius: var(--radius-md);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton { animation: skeleton 1.5s ease-in-out infinite; }
+}
+
+/*
+ * View Transitions (news card → article): the cover morphs (shared name news-<slug>), the rest of the
+ * page fades and rises a little. The header has its own name so it stays still.
+ */
+::view-transition-group(*) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+::view-transition-old(root) {
+  animation: 180ms cubic-bezier(0.7, 0, 0.84, 0) both vt-out;
+}
+::view-transition-new(root) {
+  animation: 320ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both vt-in;
+}
+@keyframes vt-out {
+  to { opacity: 0; }
+}
+@keyframes vt-in {
+  from { opacity: 0; transform: translateY(12px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}
+
+/*
+ * Theme switch with View Transitions (ThemeProvider): only the kerb gets its own snapshot group,
+ * every other shared-element name is switched off so the whole page is revealed by one edge.
+ * The root snapshots don't cross-fade — the new one is clipped open by ThemeProvider.
+ */
+.theme-kerb {
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  width: 28px;
+  z-index: 9999;
+  pointer-events: none;
+  transform: skewX(-8deg);
+  background: repeating-linear-gradient(180deg, var(--c-accent) 0 24px, #ffffff 24px 48px);
+  box-shadow: 0 0 0 1px rgba(16, 17, 20, 0.25);
+}
+html.theme-switching * {
+  view-transition-name: none !important;
+}
+html.theme-switching .theme-kerb {
+  view-transition-name: theme-kerb !important;
+}
+html.theme-switching::view-transition-old(root),
+html.theme-switching::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(theme-kerb) {
+  animation-duration: 1000ms;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
+::view-transition-old(theme-kerb) {
+  display: none;
+}
+::view-transition-new(theme-kerb) {
+  animation: none;
+}
+
+/* odometer digits (RollingNumber) */
+.rolling-column {
+  transition: transform var(--motion-300) var(--ease-out);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rolling-column { transition: none; }
+  .animate-marquee,
+  .pulse-dot,
+  .animate-spin { animation: none; }
+  .group:hover .group-hover\:translate-x-1 { transform: none; }
 }
 
 @keyframes marquee {
@@ -106,8 +529,8 @@ body {
 }
 
 @keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(225, 6, 0, 0.6); }
-  100% { box-shadow: 0 0 0 10px rgba(225, 6, 0, 0); }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-accent) 60%, transparent); }
+  100% { box-shadow: 0 0 0 10px transparent; }
 }
 .pulse-dot {
   animation: pulse-ring 1.4s ease-out infinite;
@@ -118,6 +541,25 @@ body {
   background-image: repeating-linear-gradient(
     -60deg,
     transparent 0 10px,
-    rgba(225, 6, 0, 0.9) 10px 14px
+    color-mix(in srgb, var(--c-accent) 90%, transparent) 10px 14px
   );
+}
+
+/* Theme-aware background patterns (ink-tinted, so they read on light and dark) */
+.pattern-grid {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--c-ink) 50%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--c-ink) 50%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.pattern-stripes {
+  background-image: repeating-linear-gradient(
+    -60deg,
+    transparent 0 22px,
+    color-mix(in srgb, var(--c-ink) 6%, transparent) 22px 24px
+  );
+}
+/* Soft accent glow used behind hero art */
+.glow-accent {
+  background: radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--c-accent) 33%, transparent), transparent 55%);
 }

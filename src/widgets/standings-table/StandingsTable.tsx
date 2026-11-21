@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
+import { useThemeVars } from '../../shared/lib/themeVars';
+
+const CHART_VARS = { ink: '--c-ink', muted: '--c-muted', grid: '--c-line', accent: '--c-accent' } as const;
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend
 } from 'chart.js';
@@ -19,6 +22,7 @@ export interface DriverStanding {
 }
 
 export const StandingsTable: React.FC = () => {
+  const tc = useThemeVars(CHART_VARS);
   const [activeTab, setActiveTab] = useState<'table' | 'chart'>('table');
   const [standings, setStandings] = useState<DriverStanding[]>([]);
 
@@ -87,53 +91,53 @@ export const StandingsTable: React.FC = () => {
     maintainAspectRatio: false,
     scales: {
       y: {
-        title: { display: true, text: 'PTS', color: '#fff', font: { weight: 'bold' as const } },
-        ticks: { color: '#a3a3a3' },
-        grid: { color: '#333338' }
+        title: { display: true, text: 'PTS', color: tc.ink, font: { weight: 'bold' as const } },
+        ticks: { color: tc.muted },
+        grid: { color: tc.grid }
       },
       x: {
-        ticks: { color: '#a3a3a3', maxRotation: 45, minRotation: 45 },
-        grid: { color: '#333338' }
+        ticks: { color: tc.muted, maxRotation: 45, minRotation: 45 },
+        grid: { color: tc.grid }
       }
     },
     plugins: {
-      legend: { labels: { color: '#fff', font: { family: '"Titillium Web", sans-serif' } } },
+      legend: { labels: { color: tc.ink, font: { family: 'Inter, sans-serif' } } },
       tooltip: { mode: 'index' as const, intersect: false }
     }
   };
 
   return (
-    <div className="bg-[#15151e] text-white font-sport min-h-screen">
+    <div className="bg-surface text-ink font-sport min-h-screen">
       
       {/* Заголовок */}
       <div className="p-6 pb-0">
-        <h1 className="text-3xl font-black italic uppercase mb-6 tracking-wide text-white">
+        <h1 className="text-3xl font-black italic uppercase mb-6 tracking-wide text-ink">
           2026 Drivers' Standings
         </h1>
         
         {/* Таби навігації */}
-        <div className="flex gap-8 border-b border-gray-800">
+        <div className="flex gap-8 border-b border-line">
           <button 
             onClick={() => setActiveTab('table')}
             className={`pb-3 uppercase font-bold tracking-widest text-sm transition-colors relative ${
-              activeTab === 'table' ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+              activeTab === 'table' ? 'text-ink' : 'text-muted hover:text-ink'
             }`}
           >
             Table
             {activeTab === 'table' && (
-              <span className="absolute bottom-0 left-0 w-full h-1 bg-white"></span>
+              <span className="absolute bottom-0 left-0 w-full h-1 bg-ink"></span>
             )}
           </button>
           
           <button 
             onClick={() => setActiveTab('chart')}
             className={`pb-3 uppercase font-bold tracking-widest text-sm transition-colors relative ${
-              activeTab === 'chart' ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+              activeTab === 'chart' ? 'text-ink' : 'text-muted hover:text-ink'
             }`}
           >
             Chart
             {activeTab === 'chart' && (
-              <span className="absolute bottom-0 left-0 w-full h-1 bg-white"></span>
+              <span className="absolute bottom-0 left-0 w-full h-1 bg-ink"></span>
             )}
           </button>
         </div>
@@ -142,10 +146,10 @@ export const StandingsTable: React.FC = () => {
       <div className="p-6">
         {activeTab === 'table' ? (
           /* Відмальовка таблиці */
-          <div className="bg-black rounded-lg border border-gray-800 overflow-hidden">
+          <div className="bg-surface rounded-lg border border-line overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-gray-800 text-xs text-gray-500 uppercase tracking-widest bg-[#15151e]">
+                <tr className="border-b border-line text-xs text-muted uppercase tracking-widest bg-surface">
                   <th className="py-4 px-6 w-16">Pos.</th>
                   <th className="py-4 px-6">Driver</th>
                   <th className="py-4 px-6">Nationality</th>
@@ -157,19 +161,19 @@ export const StandingsTable: React.FC = () => {
                 {standings.map((driver) => (
                   <tr 
                     key={driver.driver_number} 
-                    className="border-b border-gray-900 hover:bg-[#1a1a24] transition-colors"
+                    className="border-b border-line hover:bg-surface-2 transition-colors"
                   >
                     <td className="py-4 px-6 font-bold text-lg">{driver.position}</td>
                     <td className="py-4 px-6 flex items-center gap-3">
                       {driver.headshot_url ? (
-                        <img src={driver.headshot_url} alt={driver.full_name} className="w-10 h-10 rounded-full object-cover bg-gray-800" />
+                        <img src={driver.headshot_url} alt={driver.full_name} className="w-10 h-10 rounded-full object-cover bg-surface-2" />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-800" />
+                        <div className="w-10 h-10 rounded-full bg-surface-2" />
                       )}
                       <span className="font-bold text-base uppercase">{driver.full_name}</span>
                     </td>
-                    <td className="py-4 px-6 text-gray-400 font-bold uppercase">{driver.nationality}</td>
-                    <td className="py-4 px-6 text-gray-300">{driver.team_name}</td>
+                    <td className="py-4 px-6 text-muted font-bold uppercase">{driver.nationality}</td>
+                    <td className="py-4 px-6 text-ink/80">{driver.team_name}</td>
                     <td className="py-4 px-6 text-right font-bold text-xl">{driver.points}</td>
                   </tr>
                 ))}
@@ -178,7 +182,7 @@ export const StandingsTable: React.FC = () => {
           </div>
         ) : (
           /* Відмальовка графіку */
-          <div className="bg-black rounded-lg border border-gray-800 p-6 h-[500px]">
+          <div className="bg-surface rounded-lg border border-line p-6 h-[500px]">
             <Line data={chartData} options={chartOptions} />
           </div>
         )}

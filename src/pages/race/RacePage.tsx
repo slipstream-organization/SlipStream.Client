@@ -50,12 +50,12 @@ function RaceHero({ ev }: { ev: RaceEvent }) {
         <TrackOutline circuitId={ev.circuitId} className="h-full w-full text-ink" strokeWidth={6} />
       </div>
       <div className="relative mx-auto max-w-7xl px-4 py-10 md:px-6">
-        <Link to="/races" className="mb-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted transition hover:text-f1-red">
+        <Link to="/races" className="mb-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted transition hover:text-accent-ink">
           <ArrowLeft className="h-4 w-4" /> Усі Гран-прі
         </Link>
         <motion.div variants={stagger(0.07)} initial="hidden" animate="show" className="grid items-end gap-8 md:grid-cols-[1fr_auto]">
           <div>
-            <motion.div variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.25em] text-f1-red">
+            <motion.div variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.25em] text-accent-ink">
               Round {ev.round} · {formatDateRange(ev.startDate, ev.endDate)}
             </motion.div>
             <motion.div variants={fadeUp} className="mt-3 flex items-center gap-4">
@@ -83,7 +83,7 @@ function RaceHero({ ev }: { ev: RaceEvent }) {
 function HeroStat({ label, value, wide }: { label: string; value: string; wide?: boolean }) {
   return (
     <div className={cn(wide && 'max-w-[180px]')}>
-      <div className="text-[10px] uppercase tracking-widest text-muted">{label}</div>
+      <div className="text-xs uppercase tracking-widest text-muted">{label}</div>
       <div className="mt-1 font-bold leading-tight">{value}</div>
     </div>
   );
@@ -140,18 +140,18 @@ function MediaPanel({ ev, lapTime, driverCode, upcoming }: { ev: RaceEvent; lapT
 
 function VideoPlaceholder({ title, circuitId, duration, small }: { title: string; circuitId: string; duration?: string; small?: boolean }) {
   return (
-    <div className={cn('group relative grid w-full cursor-pointer place-items-center overflow-hidden rounded-xl bg-[#111116] text-white', small ? 'aspect-video' : 'aspect-[4/5] sm:aspect-video')}>
-      <TrackOutline circuitId={circuitId} className="absolute inset-0 m-auto h-[80%] w-[80%] text-white/10 transition-transform duration-700 group-hover:scale-105" strokeWidth={3} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-      <span className={cn('relative grid place-items-center rounded-full bg-f1-red shadow-[0_0_40px_rgba(225,6,0,0.6)] transition-transform group-hover:scale-110', small ? 'h-12 w-12' : 'h-20 w-20')}>
+    <div className={cn('group relative grid w-full cursor-pointer place-items-center overflow-hidden rounded-xl bg-surface-2 text-ink', small ? 'aspect-video' : 'aspect-[4/5] sm:aspect-video')}>
+      <TrackOutline circuitId={circuitId} className="absolute inset-0 m-auto h-[80%] w-[80%] text-ink/10 transition-transform duration-300 group-hover:scale-105" strokeWidth={3} />
+      <div className="absolute inset-0 bg-gradient-to-t from-surface-2/90 via-transparent to-transparent" />
+      <span className={cn('relative grid place-items-center rounded-full bg-f1-red shadow-[0_0_40px_color-mix(in_srgb,var(--c-accent)_60%,transparent)] transition-transform group-hover:scale-110', small ? 'h-12 w-12' : 'h-20 w-20')}>
         <Play className={cn('ml-1 fill-white', small ? 'h-5 w-5' : 'h-8 w-8')} />
       </span>
       <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between p-4">
         <div>
           <div className={cn('font-bold', small ? 'text-sm' : 'text-lg')}>{title}</div>
-          <div className="text-xs text-white/50">Відео з’явиться після підключення API</div>
+          <div className="text-xs text-muted">Відео з’явиться після підключення API</div>
         </div>
-        {duration && <span className="rounded bg-black/60 px-1.5 py-0.5 font-mono text-xs">{duration}</span>}
+        {duration && <span className="rounded bg-bg/80 px-1.5 py-0.5 font-mono text-xs">{duration}</span>}
       </div>
     </div>
   );
@@ -205,7 +205,7 @@ function Podium({ result }: { result: RaceWeekendResult }) {
         const d = DRIVER_BY_CODE[r.driverCode];
         const team = TEAM_BY_ID[d.teamId];
         return (
-          <motion.div key={r.driverCode} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: [0.25, 0, 0.45][i], type: 'spring', stiffness: 160, damping: 18 }} className="flex flex-col items-center text-center">
+          <motion.div key={r.driverCode} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: [0.25, 0, 0.45][i], duration: 0.2, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center text-center">
             <Link to={`/drivers/${r.driverCode}`} className="flex flex-col items-center transition hover:-translate-y-1">
             <DriverBadge code={r.driverCode} size={i === 1 ? 72 : 56} />
             <div className="mt-2 text-xs text-muted">{d.firstName}</div>
@@ -230,7 +230,7 @@ function DriverCell({ code }: { code: string }) {
       <span className="h-8 w-1 rounded-full" style={{ background: team.color }} />
       <DriverBadge code={code} size={28} />
       <div className="leading-tight">
-        <div className="font-bold transition-colors group-hover/drv:text-f1-red">
+        <div className="font-bold transition-colors group-hover/drv:text-accent-ink">
           <span className="hidden sm:inline">{d.firstName} </span>
           <span className="uppercase">{d.lastName}</span>
         </div>
@@ -247,7 +247,7 @@ function RaceTable({ result }: { result: RaceWeekendResult }) {
     <div className="card overflow-x-auto">
       <table className="w-full min-w-[620px] text-sm">
         <thead>
-          <tr className="border-b border-line text-left text-[11px] uppercase tracking-wider text-muted">
+          <tr className="border-b border-line text-left text-xs uppercase tracking-wider text-muted">
             <th className="w-14 px-4 py-3">Поз</th>
             <th className="px-4 py-3">Пілот</th>
             <th className="px-4 py-3 text-center">Старт</th>
@@ -261,19 +261,19 @@ function RaceTable({ result }: { result: RaceWeekendResult }) {
             const gained = r.position ? r.grid - r.position : 0;
             return (
               <motion.tr key={r.driverCode} {...rowAnim(i)} className="border-b border-line/60 transition-colors last:border-0 hover:bg-surface-2">
-                <td className="px-4 py-2.5 font-mono font-bold">{r.position ?? <span className="text-f1-red">DNF</span>}</td>
+                <td className="px-4 py-2.5 font-mono font-bold">{r.position ?? <span className="text-accent-ink">DNF</span>}</td>
                 <td className="px-4 py-2.5">
                   <DriverCell code={r.driverCode} />
                 </td>
                 <td className="px-4 py-2.5 text-center font-mono">
                   {r.grid}
-                  {r.position && gained !== 0 && <span className={cn('ml-1 text-[10px]', gained > 0 ? 'text-emerald-500' : 'text-f1-red')}>{gained > 0 ? `▲${gained}` : `▼${-gained}`}</span>}
+                  {r.position && gained !== 0 && <span className={cn('ml-1 text-xs', gained > 0 ? 'text-positive' : 'text-accent-ink')}>{gained > 0 ? `▲${gained}` : `▼${-gained}`}</span>}
                 </td>
                 <td className="px-4 py-2.5 text-center font-mono">{r.laps}</td>
                 <td className="px-4 py-2.5 font-mono">
                   {r.time}
                   {r.fastestLap && (
-                    <span className="ml-2 inline-flex items-center gap-1 rounded bg-purple-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    <span className="ml-2 inline-flex items-center gap-1 rounded bg-purple-600 px-1.5 py-0.5 text-xs font-bold text-white">
                       <Zap className="h-3 w-3" /> FL
                     </span>
                   )}
@@ -293,7 +293,7 @@ function QualiTable({ result }: { result: RaceWeekendResult }) {
     <div className="card overflow-x-auto">
       <table className="w-full min-w-[620px] text-sm">
         <thead>
-          <tr className="border-b border-line text-left text-[11px] uppercase tracking-wider text-muted">
+          <tr className="border-b border-line text-left text-xs uppercase tracking-wider text-muted">
             <th className="w-14 px-4 py-3">Поз</th>
             <th className="px-4 py-3">Пілот</th>
             <th className="px-4 py-3">Q1</th>
@@ -321,7 +321,7 @@ function QualiTable({ result }: { result: RaceWeekendResult }) {
 
 function StartingGrid({ result }: { result: RaceWeekendResult }) {
   return (
-    <div className="card relative overflow-hidden bg-[#2e3035] p-6 text-white md:p-10">
+    <div className="card relative overflow-hidden bg-surface-2 p-6 text-ink md:p-10">
       <div className="mx-auto mb-6 h-3 max-w-md [background:repeating-conic-gradient(#fff_0_25%,#111_0_50%)_0_0/12px_12px]" />
       <div className="mx-auto grid max-w-md grid-cols-2 gap-x-10">
         {result.qualifying.map((q, i) => (
@@ -330,14 +330,14 @@ function StartingGrid({ result }: { result: RaceWeekendResult }) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.04 }}
-            className={cn('relative mb-6 border-x-2 border-t-2 border-white/80 px-3 pb-2 pt-2', i % 2 ? 'mt-10' : '')}
+            className={cn('relative mb-6 border-x-2 border-t-2 border-ink/80 px-3 pb-2 pt-2', i % 2 ? 'mt-10' : '')}
           >
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs text-white/60">P{q.position}</span>
+              <span className="font-mono text-xs text-muted">P{q.position}</span>
               <DriverBadge code={q.driverCode} size={26} />
               <span className="font-black">{q.driverCode}</span>
             </div>
-            <div className="mt-1 font-mono text-[10px] text-white/50">{q.q3 ?? q.q2 ?? q.q1}</div>
+            <div className="mt-1 font-mono text-xs text-muted">{q.q3 ?? q.q2 ?? q.q1}</div>
           </motion.div>
         ))}
       </div>
@@ -362,14 +362,14 @@ function UpcomingWeekend({ ev }: { ev: RaceEvent }) {
   return (
     <>
       <section className="grid gap-6 lg:grid-cols-[1fr_380px]">
-        <div className="relative overflow-hidden rounded-[14px] border border-white/10 bg-[#0b0b0f] p-6 text-white md:p-8">
+        <div className="relative overflow-hidden rounded-lg border border-line bg-surface p-6 text-ink md:p-8">
           <div className="pointer-events-none absolute -left-20 -top-20 h-80 w-80 rounded-full bg-f1-red/30 blur-[100px]" />
           <div className="relative">
-            <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-white/50">
+            <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-muted">
               <Timer className="h-4 w-4" /> До старту гонки
             </div>
             <Countdown target={raceStart(ev)} />
-            <Link to="/game" className="mt-8 inline-flex items-center gap-2 rounded-full bg-f1-red px-6 py-3 text-sm font-bold uppercase transition hover:bg-[#ff1a12]">
+            <Link to="/game" className="mt-8 inline-flex items-center gap-2 rounded-full bg-f1-red px-6 py-3 text-sm font-bold uppercase text-on-accent transition hover:bg-accent-hover">
               <Target className="h-4 w-4" /> Зробити bold prediction
             </Link>
           </div>
@@ -382,13 +382,13 @@ function UpcomingWeekend({ ev }: { ev: RaceEvent }) {
               const past = d.getTime() < now;
               return (
                 <li key={s.kind} className={cn('flex items-center justify-between rounded-lg px-3 py-2.5', s.kind === 'RACE' ? 'bg-f1-red/10' : 'hover:bg-surface-2', past && 'opacity-50')}>
-                  <span className={cn('font-bold', s.kind === 'RACE' && 'text-f1-red')}>{SESSION_LABEL[s.kind]}</span>
+                  <span className={cn('font-bold', s.kind === 'RACE' && 'text-accent-ink')}>{SESSION_LABEL[s.kind]}</span>
                   <span className="font-mono text-xs text-muted">{d.toLocaleString('uk-UA', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                 </li>
               );
             })}
           </ul>
-          <p className="mt-3 text-[11px] text-muted">Час показано у вашому часовому поясі</p>
+          <p className="mt-3 text-xs text-muted">Час показано у вашому часовому поясі</p>
         </div>
       </section>
       <AiPreview round={ev.round} laps={ev.laps} />

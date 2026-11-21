@@ -37,7 +37,7 @@ function CarCard({ id }: { id: TeamId }) {
       )}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-10 text-white">
         <div className="display text-xl leading-tight">{team.name}</div>
-        <div className="text-[11px] text-white/70">{team.fullName}</div>
+        <div className="text-xs text-white/70">{team.fullName}</div>
       </div>
     </motion.div>
   );
@@ -55,7 +55,7 @@ export function TeamStatsPanel({ id }: { id: TeamId }) {
       <motion.section variants={panelSection}>
         <div className="mb-3 flex items-center justify-between">
           <h4 className="display text-lg">Сезон {SEASON}</h4>
-          <span className="rounded-full bg-f1-red px-2.5 py-0.5 font-mono text-xs font-bold text-white">P{season.position} у Кубку конструкторів</span>
+          <span className="rounded-full bg-f1-red px-2.5 py-0.5 font-mono text-xs font-bold text-on-accent">P{season.position} у Кубку конструкторів</span>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <Stat icon={<Star className="h-3 w-3" />} label="Очок" value={season.points} />
@@ -66,7 +66,7 @@ export function TeamStatsPanel({ id }: { id: TeamId }) {
           <Stat icon={<XCircle className="h-3 w-3" />} label="Сходів" value={season.dnfs} />
         </div>
         <div className="mt-4">
-          <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted">Внесок пілотів</div>
+          <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">Внесок пілотів</div>
           <div className="space-y-2">
             {drivers.map((d, i) => {
               const dr = DRIVER_BY_CODE[d.code];

@@ -422,22 +422,43 @@ export function indexAtTime(lap: LapModel, t: number) {
   return lo + (t - time[lo]) / (time[hi] - time[lo]);
 }
 
-/** Interpolated pose. `widthScale` widens the track (map view) — the car stays on the scaled racing line. */
-export function sampleAt(lap: LapModel, fi: number, widthScale = 1) {
+export interface Pose {
+  x: number;
+  y: number;
+  tx: number;
+  ty: number;
+  speed: number;
+  dist: number;
+}
+
+export const makePose = (): Pose => ({ x: 0, y: 0, tx: 0, ty: 0, speed: 0, dist: 0 });
+
+/**
+ * Interpolated pose written into `out` — no allocation, safe to call thousands of times per frame.
+ * `fi` is a fractional sample index from `indexAtTime`, so motion is driven by time, not by frames.
+ * `widthScale` widens the track (map view) — the car stays on the scaled racing line.
+ */
+export function sampleInto(lap: LapModel, fi: number, widthScale: number, out: Pose): Pose {
   const { n } = lap;
-  const i0 = Math.floor(fi) % n;
+  const fl = Math.floor(fi);
+  const i0 = ((fl % n) + n) % n;
   const i1 = (i0 + 1) % n;
-  const f = fi - Math.floor(fi);
-  const lerp = (a: Float32Array) => a[i0] + (a[i1] - a[i0]) * f;
-  const o = lerp(lap.off) * widthScale;
-  return {
-    x: lerp(lap.cx) + lerp(lap.nx) * o,
-    y: lerp(lap.cy) + lerp(lap.ny) * o,
-    tx: lerp(lap.tx),
-    ty: lerp(lap.ty),
-    speed: lerp(lap.speed),
-    dist: lap.dist[i0] + (lap.dist[i1] - lap.dist[i0]) * f,
-  };
+  const f = fi - fl;
+  const o = (lap.off[i0] + (lap.off[i1] - lap.off[i0]) * f) * widthScale;
+  const nx = lap.nx[i0] + (lap.nx[i1] - lap.nx[i0]) * f;
+  const ny = lap.ny[i0] + (lap.ny[i1] - lap.ny[i0]) * f;
+  out.x = lap.cx[i0] + (lap.cx[i1] - lap.cx[i0]) * f + nx * o;
+  out.y = lap.cy[i0] + (lap.cy[i1] - lap.cy[i0]) * f + ny * o;
+  out.tx = lap.tx[i0] + (lap.tx[i1] - lap.tx[i0]) * f;
+  out.ty = lap.ty[i0] + (lap.ty[i1] - lap.ty[i0]) * f;
+  out.speed = lap.speed[i0] + (lap.speed[i1] - lap.speed[i0]) * f;
+  out.dist = lap.dist[i0] + (lap.dist[i1] - lap.dist[i0]) * f;
+  return out;
+}
+
+/** Interpolated pose as a new object (convenience for non-hot paths). */
+export function sampleAt(lap: LapModel, fi: number, widthScale = 1) {
+  return sampleInto(lap, fi, widthScale, makePose());
 }
 
 export interface Corner {

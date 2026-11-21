@@ -8,6 +8,7 @@ import { DRIVERS, DRIVER_BY_CODE, RACES, TEAM_BY_ID } from '../../shared/mock/se
 import { Countdown } from '../../widgets/countdown/Countdown';
 import { DriverBadge, Flag, Loader, SectionTitle } from '../../shared/ui/atoms';
 import { fadeUp, stagger } from '../../shared/ui/motion';
+import { useToast } from '../../shared/ui/Toast';
 import { cn } from '../../shared/lib/utils';
 
 type Slot = 'pole' | 'p1' | 'p2' | 'p3';
@@ -42,7 +43,7 @@ export function GamePage() {
   return (
     <div className="mx-auto max-w-7xl px-4 pt-10 md:px-6">
       <div className="mb-10">
-        <div className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-f1-red">Predict & Bingo</div>
+        <div className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-accent-ink">Predict & Bingo</div>
         <h1 className="display text-5xl md:text-7xl">Гра сезону</h1>
       </div>
       <div className="grid gap-10 xl:grid-cols-[1fr_340px]">
@@ -61,7 +62,7 @@ function PredictionForm() {
   const round = race?.round ?? 0;
   const [pred, setPred] = useState<Prediction>(() => loadPrediction(round));
   const [active, setActive] = useState<Slot>('pole');
-  const [justSubmitted, setJustSubmitted] = useState(false);
+  const toast = useToast();
   const [now] = useState(() => Date.now());
 
   useEffect(() => {
@@ -106,18 +107,18 @@ function PredictionForm() {
   return (
     <section>
       {/* header card */}
-      <div className="relative mb-6 overflow-hidden rounded-[14px] border border-white/10 bg-[#0b0b0f] p-6 text-white">
+      <div className="relative mb-6 overflow-hidden rounded-lg border border-line bg-surface p-6 text-ink">
         <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-f1-red/30 blur-[90px]" />
         <div className="relative flex flex-wrap items-center justify-between gap-6">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-white/50">Round {race.round} · Bold predictions</div>
+            <div className="text-xs font-bold uppercase tracking-[0.25em] text-muted">Round {race.round} · Bold predictions</div>
             <div className="mt-2 flex items-center gap-3">
               <Flag code={race.countryCode} className="h-8 w-8" />
               <span className="display text-4xl">{race.country}</span>
             </div>
           </div>
           <div>
-            <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
+            <div className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] text-muted">
               <Lock className="h-3 w-3" /> {locked ? 'Прийом закрито' : 'Закриття через'}
             </div>
             {!locked && <Countdown target={quali} size="sm" />}
@@ -140,9 +141,9 @@ function PredictionForm() {
               className={cn('relative overflow-hidden rounded-xl border-2 bg-surface p-4 text-left transition', isActive ? 'border-f1-red' : 'border-line hover:border-f1-red/40')}
             >
               {isActive && <motion.span layoutId="active-slot" className="absolute inset-0 bg-f1-red/5" />}
-              <div className="relative flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted">
+              <div className="relative flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted">
                 {s.label}
-                <span className="font-mono text-f1-red">+{s.pts}</span>
+                <span className="font-mono text-accent-ink">+{s.pts}</span>
               </div>
               <div className="relative mt-3 flex h-10 items-center gap-2">
                 <AnimatePresence mode="wait">
@@ -151,7 +152,7 @@ function PredictionForm() {
                       <DriverBadge code={d.code} size={36} />
                       <div className="leading-tight">
                         <div className="font-black">{d.code}</div>
-                        <div className="text-[11px] text-muted">{TEAM_BY_ID[d.teamId].name}</div>
+                        <div className="text-xs text-muted">{TEAM_BY_ID[d.teamId].name}</div>
                       </div>
                     </motion.div>
                   ) : (
@@ -183,9 +184,9 @@ function PredictionForm() {
               <DriverBadge code={d.code} size={28} className="ml-1" />
               <div className="min-w-0 leading-tight">
                 <div className="text-sm font-black">{d.code}</div>
-                <div className="truncate text-[10px] text-muted">{d.lastName}</div>
+                <div className="truncate text-xs text-muted">{d.lastName}</div>
               </div>
-              {usedIn.length > 0 && <span className="absolute right-1.5 top-1.5 rounded bg-f1-red px-1 text-[9px] font-bold uppercase text-white">{usedIn.map((s) => s.label.replace('Переможець', 'P1')).join('/')}</span>}
+              {usedIn.length > 0 && <span className="absolute right-1.5 top-1.5 rounded bg-f1-red px-1 text-xs font-bold uppercase text-on-accent">{usedIn.map((s) => s.label.replace('Переможець', 'P1')).join('/')}</span>}
             </motion.button>
           );
         })}
@@ -195,7 +196,7 @@ function PredictionForm() {
       <div className="mt-8">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="display flex items-center gap-2 text-2xl">
-            <Flame className="h-5 w-5 text-f1-red" /> Сміливі прогнози
+            <Flame className="h-5 w-5 text-accent-ink" /> Сміливі прогнози
           </h3>
           <span className="font-mono text-xs text-muted">
             {pred.bold.length}/{MAX_BOLD}
@@ -212,9 +213,9 @@ function PredictionForm() {
                 onClick={() => toggleBold(b.id)}
                 className={cn('flex items-center gap-3 rounded-lg border p-3 text-left text-sm font-semibold transition', on ? 'border-f1-red bg-f1-red/10' : 'border-line bg-surface hover:border-ink/30')}
               >
-                <span className={cn('grid h-5 w-5 shrink-0 place-items-center rounded border-2 transition', on ? 'border-f1-red bg-f1-red text-white' : 'border-line')}>{on && <Check className="h-3 w-3" />}</span>
+                <span className={cn('grid h-5 w-5 shrink-0 place-items-center rounded border-2 transition', on ? 'border-f1-red bg-f1-red text-on-accent' : 'border-line')}>{on && <Check className="h-3 w-3" />}</span>
                 <span className="flex-1">{b.label}</span>
-                <span className={cn('rounded-full px-2 py-0.5 font-mono text-xs font-bold', b.multiplier >= 4 ? 'bg-f1-red text-white' : 'bg-surface-2')}>×{b.multiplier}</span>
+                <span className={cn('rounded-full px-2 py-0.5 font-mono text-xs font-bold', b.multiplier >= 4 ? 'bg-f1-red text-on-accent' : 'bg-surface-2')}>×{b.multiplier}</span>
               </motion.button>
             );
           })}
@@ -231,18 +232,18 @@ function PredictionForm() {
       {/* submit */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-surface p-4">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-wider text-muted">Потенційні очки</div>
-          <motion.div key={potential} initial={{ scale: 1.25, color: '#e10600' }} animate={{ scale: 1, color: 'var(--c-ink)' }} className="display origin-left text-4xl">
+          <div className="text-xs font-bold uppercase tracking-wider text-muted">Потенційні очки</div>
+          <motion.div key={potential} initial={{ scale: 1.25, color: 'var(--c-accent-ink)' }} animate={{ scale: 1, color: 'var(--c-ink)' }} className="display origin-left text-4xl">
             {potential}
           </motion.div>
         </div>
         {submitted ? (
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-2 rounded-full bg-emerald-500/15 px-4 py-2 text-sm font-bold text-emerald-500">
+            <span className="flex items-center gap-2 rounded-full bg-emerald-500/15 px-4 py-2 text-sm font-bold text-positive">
               <Check className="h-4 w-4" /> Прогноз зафіксовано
             </span>
             {!locked && (
-              <button type="button" onClick={() => setPred((p) => ({ ...p, submittedAt: undefined }))} className="text-xs font-bold uppercase text-muted hover:text-f1-red">
+              <button type="button" onClick={() => setPred((p) => ({ ...p, submittedAt: undefined }))} className="text-xs font-bold uppercase text-muted hover:text-accent-ink">
                 Змінити
               </button>
             )}
@@ -250,31 +251,21 @@ function PredictionForm() {
         ) : (
           <button
             type="button"
-            disabled={!complete || locked}
+            disabled={locked}
             onClick={() => {
+              if (!complete) {
+                toast('Обери поул і подіум, щоб зафіксувати прогноз.', { tone: 'info' });
+                return;
+              }
               setPred((p) => ({ ...p, submittedAt: new Date().toISOString() }));
-              setJustSubmitted(true);
-              setTimeout(() => setJustSubmitted(false), 2200);
+              toast('Locked in! Прогноз зафіксовано.');
             }}
-            className="rounded-full bg-f1-red px-8 py-3 text-sm font-bold uppercase tracking-wide text-white transition enabled:hover:bg-[#ff1a12] disabled:cursor-not-allowed disabled:opacity-40"
+            className={cn('press min-h-11 rounded-full bg-f1-red px-8 py-3 text-sm font-semibold uppercase tracking-wide text-on-accent disabled:cursor-not-allowed disabled:opacity-40', !complete && 'opacity-60')}
           >
             {complete ? 'Зафіксувати прогноз' : 'Заповни поул і подіум'}
           </button>
         )}
       </div>
-
-      <AnimatePresence>
-        {justSubmitted && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.6, rotate: -12 }}
-            animate={{ opacity: 1, scale: 1, rotate: -6 }}
-            exit={{ opacity: 0, scale: 1.2 }}
-            className="pointer-events-none fixed inset-0 z-50 grid place-items-center"
-          >
-            <div className="display rounded-xl border-4 border-f1-red bg-bg/90 px-10 py-6 text-5xl text-f1-red shadow-2xl backdrop-blur">Locked in!</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 }
@@ -285,7 +276,7 @@ function PredictionLeaderboard() {
     <aside>
       <div className="card sticky top-24 p-5">
         <h3 className="display mb-1 flex items-center gap-2 text-2xl">
-          <Trophy className="h-5 w-5 text-f1-red" /> Рейтинг прогнозистів
+          <Trophy className="h-5 w-5 text-accent-ink" /> Рейтинг прогнозистів
         </h3>
         <p className="mb-4 text-xs text-muted">Сума очок за всі етапи сезону</p>
         {!data ? (
@@ -303,10 +294,10 @@ function PredictionLeaderboard() {
                 </span>
                 <span className="flex-1 truncate text-sm font-bold">
                   {u.name}
-                  {u.isMe && <span className="ml-1.5 text-[10px] uppercase text-f1-red">ти</span>}
+                  {u.isMe && <span className="ml-1.5 text-xs uppercase text-accent-ink">ти</span>}
                 </span>
                 {u.streak >= 3 && (
-                  <span className="flex items-center gap-0.5 text-[11px] text-orange-500">
+                  <span className="flex items-center gap-0.5 text-xs text-orange-500">
                     <Flame className="h-3 w-3" />
                     {u.streak}
                   </span>
@@ -346,11 +337,11 @@ function SeasonBingo() {
           <div className="flex gap-4 text-right">
             <div>
               <div className="display text-3xl">{doneCount}/24</div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted">подій</div>
+              <div className="text-xs font-bold uppercase tracking-widest text-muted">подій</div>
             </div>
             <div>
-              <div className="display text-3xl text-f1-red">{lines.length}</div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted">ліній</div>
+              <div className="display text-3xl text-accent-ink">{lines.length}</div>
+              <div className="text-xs font-bold uppercase tracking-widest text-muted">ліній</div>
             </div>
           </div>
         }
@@ -377,7 +368,7 @@ function BingoTile({ cell, highlight }: { cell: BingoCell & { done: boolean }; h
       whileHover={{ y: -3 }}
       className={cn(
         'relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-lg border p-1.5 text-center sm:rounded-xl sm:p-3',
-        cell.free ? 'border-f1-red bg-f1-red text-white' : highlight ? 'border-f1-red bg-f1-red/10' : cell.done ? 'border-line bg-surface-2' : 'border-line bg-surface',
+        cell.free ? 'border-f1-red bg-f1-red text-on-accent' : highlight ? 'border-f1-red bg-f1-red/10' : cell.done ? 'border-line bg-surface-2' : 'border-line bg-surface',
       )}
     >
       {cell.free ? (
@@ -387,15 +378,15 @@ function BingoTile({ cell, highlight }: { cell: BingoCell & { done: boolean }; h
         </>
       ) : (
         <>
-          <span className={cn('text-[9px] font-bold leading-tight sm:text-sm', cell.done && 'opacity-50')}>{cell.label}</span>
+          <span className={cn('text-xs font-bold leading-tight sm:text-sm', cell.done && 'opacity-50')}>{cell.label}</span>
           {cell.done && (
             <motion.div
-              variants={{ hidden: { opacity: 0, scale: 2.2, rotate: -30 }, show: { opacity: 1, scale: 1, rotate: -14, transition: { type: 'spring', stiffness: 300, damping: 14, delay: 0.3 } } }}
+              variants={{ hidden: { opacity: 0, scale: 2.2, rotate: -30 }, show: { opacity: 1, scale: 1, rotate: -14, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.3 } } }}
               className="absolute inset-0 grid place-items-center"
             >
-              <div className="flex flex-col items-center rounded-full border-[3px] border-f1-red px-2 py-1 text-f1-red sm:border-4 sm:px-3 sm:py-2">
+              <div className="flex flex-col items-center rounded-full border-[3px] border-f1-red px-2 py-1 text-accent-ink sm:border-4 sm:px-3 sm:py-2">
                 <Check className="h-4 w-4 sm:h-6 sm:w-6" strokeWidth={3} />
-                {race && <span className="hidden font-mono text-[10px] font-bold uppercase sm:block">R{race.round} {race.countryCode.toUpperCase()}</span>}
+                {race && <span className="hidden font-mono text-xs font-bold uppercase sm:block">R{race.round} {race.countryCode.toUpperCase()}</span>}
               </div>
             </motion.div>
           )}

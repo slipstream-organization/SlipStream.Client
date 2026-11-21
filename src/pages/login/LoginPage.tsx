@@ -27,18 +27,18 @@ export function LoginPage() {
         variants={stagger(0.08)}
         initial="hidden"
         animate="show"
-        className="relative w-full max-w-md overflow-hidden rounded-[18px] border border-white/10 bg-[#0b0b0f] p-8 text-white md:p-10"
+        className="relative w-full max-w-md overflow-hidden rounded-lg border border-line bg-surface p-8 text-ink md:p-10"
       >
-        <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(circle at 85% 15%, #e1060055, transparent 55%)' }} />
+        <div className="glow-accent pointer-events-none absolute inset-0" />
         <div className="speed-stripes pointer-events-none absolute -left-10 bottom-6 h-2 w-1/2 opacity-60" />
         <div className="relative">
-          <motion.div variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.25em] text-white/50">
+          <motion.div variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.25em] text-muted">
             Вхід
           </motion.div>
           <motion.h1 variants={fadeUp} className="display mt-1 text-5xl">
             На старт
           </motion.h1>
-          <motion.p variants={fadeUp} className="mt-3 text-sm text-white/60">
+          <motion.p variants={fadeUp} className="mt-3 text-sm text-muted">
             Увійдіть, щоб зберігати прогнози, кола і свій профіль.
           </motion.p>
 
@@ -52,7 +52,7 @@ export function LoginPage() {
             variants={fadeUp}
             type="button"
             onClick={() => login(returnUrl)}
-            className="mt-8 flex w-full items-center justify-center gap-3 rounded-full bg-white px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-black transition-transform hover:scale-[1.02]"
+            className="mt-8 flex w-full items-center justify-center gap-3 rounded-full bg-ink px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-bg transition-transform"
           >
             <LogIn className="h-4 w-4" />
             Увійти через Google

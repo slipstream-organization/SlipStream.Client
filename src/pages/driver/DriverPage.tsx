@@ -20,7 +20,7 @@ export function DriverPage() {
     return (
       <div className="py-40 text-center text-muted">
         Пілота не знайдено ·{' '}
-        <Link to="/standings" className="text-f1-red">
+        <Link to="/standings" className="text-accent-ink">
           до таблиці
         </Link>
       </div>
@@ -83,12 +83,12 @@ function DriverView({ code }: { code: string }) {
           <span className="absolute inset-y-0 left-0 w-1.5" style={{ background: team.color }} />
           <DriverBadge code={mate.code} size={56} />
           <div className="flex-1">
-            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted">Напарник по {team.name}</div>
+            <div className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Напарник по {team.name}</div>
             <div className="display text-2xl">
               {mate.firstName} {mate.lastName}
             </div>
           </div>
-          <ArrowRight className="h-5 w-5 text-muted transition group-hover:translate-x-1 group-hover:text-f1-red" />
+          <ArrowRight className="h-5 w-5 text-muted transition group-hover:translate-x-1 group-hover:text-accent-ink" />
         </Link>
       </div>
     </div>
@@ -101,17 +101,17 @@ function Hero({ code, position, points }: { code: string; position: number; poin
   const [carOk, setCarOk] = useState(true);
   const [logoOk, setLogoOk] = useState(true);
   return (
-    <section className="relative overflow-hidden text-white" style={{ background: `linear-gradient(115deg, #0b0b0f 30%, ${team.color}cc 100%)` }}>
-      <div className="pointer-events-none absolute -right-10 -top-16 select-none font-sport text-[260px] font-black italic leading-none text-white/[0.06] md:text-[420px]">{d.number}</div>
+    <section className="relative overflow-hidden text-ink" style={{ background: `linear-gradient(115deg, var(--c-bg) 30%, color-mix(in srgb, ${team.color} 80%, transparent) 100%)` }}>
+      <div className="pointer-events-none absolute -right-10 -top-16 select-none font-sport text-[260px] font-black italic leading-none text-ink/[0.06] md:text-[420px]">{d.number}</div>
       <div className="relative mx-auto max-w-7xl px-4 pb-10 pt-8 md:px-6 md:pb-16">
-        <Link to="/standings" className="mb-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white/60 transition hover:text-white">
+        <Link to="/standings" className="mb-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted transition hover:text-ink">
           <ArrowLeft className="h-4 w-4" /> Таблиця лідерів
         </Link>
         <div className="grid items-end gap-8 lg:grid-cols-[1fr_1.1fr]">
           <motion.div variants={stagger(0.08)} initial="hidden" animate="show">
             <motion.div variants={fadeUp} className="flex items-center gap-3">
               {logoOk && <img src={teamLogo(d.teamId)} alt={team.name} onError={() => setLogoOk(false)} className="h-7 w-auto" />}
-              <span className="text-sm font-bold uppercase tracking-[0.2em] text-white/70">{team.fullName}</span>
+              <span className="text-sm font-bold uppercase tracking-[0.2em] text-ink/80">{team.fullName}</span>
             </motion.div>
             <motion.div variants={fadeUp} className="mt-4 text-2xl font-light md:text-3xl">
               {d.firstName}
@@ -120,21 +120,21 @@ function Hero({ code, position, points }: { code: string; position: number; poin
               {d.lastName}
             </motion.h1>
             <motion.div variants={fadeUp} className="mt-5 flex flex-wrap items-center gap-3">
-              <span className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold">
+              <span className="flex items-center gap-2 rounded-full bg-ink/10 px-3 py-1.5 text-sm font-bold">
                 <Flag code={d.country} className="h-5 w-5 ring-0" /> {BIOS[code]?.birthplace.split(',').pop()?.trim()}
               </span>
               <span className="rounded-full px-3 py-1.5 font-mono text-sm font-bold text-black" style={{ background: team.color }}>
                 #{d.number}
               </span>
-              {d.rookie && <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold uppercase text-black">rookie</span>}
+              {d.rookie && <span className="rounded-full bg-ink px-3 py-1.5 text-xs font-bold uppercase text-bg">rookie</span>}
             </motion.div>
             <motion.div variants={fadeUp} className="mt-8 flex gap-8">
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">У чемпіонаті</div>
+                <div className="text-xs font-bold uppercase tracking-[0.2em] text-muted">У чемпіонаті</div>
                 <div className="display text-5xl">P{position}</div>
               </div>
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">Очки {SEASON}</div>
+                <div className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Очки {SEASON}</div>
                 <div className="display text-5xl">{points}</div>
               </div>
             </motion.div>
@@ -159,8 +159,8 @@ function Hero({ code, position, points }: { code: string; position: number; poin
 function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <motion.div variants={fadeUp} className="card p-4">
-      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
-        <span className="text-f1-red">{icon}</span>
+      <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
+        <span className="text-accent-ink">{icon}</span>
         {label}
       </div>
       <div className="mt-1 truncate text-lg font-bold">{value}</div>
@@ -204,7 +204,7 @@ function SeasonResults({ code }: { code: string }) {
                 onMouseEnter={() => setHover(i)}
                 onMouseLeave={() => setHover(null)}
               >
-                <span className={cn('mb-1 text-center font-mono text-[10px] font-bold transition', hover === i ? 'opacity-100' : 'opacity-60')}>
+                <span className={cn('mb-1 text-center font-mono text-xs font-bold transition', hover === i ? 'opacity-100' : 'opacity-60')}>
                   {r.position ? `P${r.position}` : 'DNF'}
                 </span>
                 <motion.div
@@ -213,9 +213,9 @@ function SeasonResults({ code }: { code: string }) {
                   viewport={{ once: true }}
                   transition={{ duration: 0.6, delay: i * 0.03, ease: 'easeOut' }}
                   className="w-full rounded-t"
-                  style={{ background: r.position === null ? '#e10600' : team.color, opacity: hover === null || hover === i ? 1 : 0.4 }}
+                  style={{ background: r.position === null ? 'var(--c-accent)' : team.color, opacity: hover === null || hover === i ? 1 : 0.4 }}
                 />
-                <span className="mt-1 text-center font-mono text-[9px] text-muted">{r.label}</span>
+                <span className="mt-1 text-center font-mono text-xs text-muted">{r.label}</span>
               </div>
             );
           })}
@@ -260,8 +260,8 @@ function Biography({ code }: { code: string }) {
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
-        className="relative min-h-[380px] overflow-hidden rounded-[18px]"
-        style={{ background: `radial-gradient(circle at 50% 35%, ${team.color}, ${team.color}55 55%, #0b0b0f 100%)` }}
+        className="relative min-h-[380px] overflow-hidden rounded-lg"
+        style={{ background: `radial-gradient(circle at 50% 35%, ${team.color}, color-mix(in srgb, ${team.color} 33%, transparent) 55%, var(--c-surface) 100%)` }}
       >
         <span className="display absolute left-5 top-3 text-[120px] leading-none text-black/15">{d.number}</span>
         <div className="speed-stripes absolute bottom-8 left-0 h-2 w-1/2 opacity-60" />
@@ -273,8 +273,8 @@ function Biography({ code }: { code: string }) {
             className="absolute bottom-0 left-1/2 h-[95%] -translate-x-1/2 object-contain object-bottom drop-shadow-[0_20px_30px_rgba(0,0,0,0.45)]"
           />
         )}
-        <div className="absolute bottom-4 right-4 rounded-lg bg-black/50 px-3 py-2 text-right text-white backdrop-blur">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-white/60">{team.name}</div>
+        <div className="absolute bottom-4 right-4 rounded-lg bg-black/50 px-3 py-2 text-right text-white">
+          <div className="text-xs uppercase tracking-[0.2em] text-white/60">{team.name}</div>
           <div className="font-bold">
             {d.firstName} {d.lastName}
           </div>

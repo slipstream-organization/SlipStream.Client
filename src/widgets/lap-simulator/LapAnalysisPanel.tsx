@@ -8,9 +8,9 @@ import { fitShape } from '../../shared/lib/trackShape';
 import { cn, formatLapTime } from '../../shared/lib/utils';
 
 const VERDICT: Record<Verdict, { color: string; label: string }> = {
-  gain: { color: '#22c55e', label: 'виграєш' },
-  ok: { color: '#eab308', label: 'в темпі' },
-  loss: { color: '#ef4444', label: 'втрачаєш' },
+  gain: { color: 'var(--c-positive)', label: 'виграєш' },
+  ok: { color: 'var(--c-warning)', label: 'в темпі' },
+  loss: { color: 'var(--c-negative)', label: 'втрачаєш' },
 };
 
 interface Props {
@@ -55,21 +55,21 @@ export function LapAnalysisPanel({ circuitId, myLapTime, myStyle, refLapTime, re
   const maxAbs = Math.max(0.05, ...analysis.segments.map((s) => Math.abs(s.delta)));
 
   return (
-    <div className="grid gap-4 rounded-xl border border-white/10 bg-[#15151e] p-4 text-white md:p-5 lg:grid-cols-[1.1fr_1fr]">
+    <div className="grid gap-4 rounded-xl border border-line bg-surface p-4 text-ink md:p-5 lg:grid-cols-[1.1fr_1fr]">
       {/* map + sectors */}
       <div>
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
           <h4 className="display text-xl">Де ти виграєш і програєш</h4>
-          <span className="font-mono text-xs text-white/60">vs {refLabel}</span>
+          <span className="font-mono text-xs text-muted">vs {refLabel}</span>
         </div>
-        <div className="relative rounded-lg bg-black/30">
+        <div className="relative rounded-lg bg-surface-2">
           <svg viewBox={map.viewBox} className="h-auto w-full">
             {map.segments.map(({ s, d }, i) => (
               <path
                 key={i}
                 d={d}
                 fill="none"
-                stroke={VERDICT[s.verdict].color}
+                style={{ stroke: VERDICT[s.verdict].color }}
                 strokeWidth={hover === i ? 7 : 4.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -81,16 +81,16 @@ export function LapAnalysisPanel({ circuitId, myLapTime, myStyle, refLapTime, re
               />
             ))}
             {map.segments.map(({ s, label }, i) => (
-              <text key={`t${i}`} x={label[0]} y={label[1] - 3} textAnchor="middle" className="pointer-events-none fill-white font-mono" fontSize="3.2" fontWeight="700">
+              <text key={`t${i}`} x={label[0]} y={label[1] - 3} textAnchor="middle" className="pointer-events-none fill-ink font-mono" fontSize="3.2" fontWeight="700">
                 T{s.corner.number}
               </text>
             ))}
-            <rect x={map.start[0] - 1.5} y={map.start[1] - 1.5} width="3" height="3" fill="#fff" />
+            <rect x={map.start[0] - 1.5} y={map.start[1] - 1.5} width="3" height="3" className="fill-ink" />
           </svg>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px]">
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
           {(Object.keys(VERDICT) as Verdict[]).map((v) => (
-            <span key={v} className="flex items-center gap-1.5 text-white/70">
+            <span key={v} className="flex items-center gap-1.5 text-ink/80">
               <span className="h-2 w-4 rounded-full" style={{ background: VERDICT[v].color }} />
               {VERDICT[v].label}
             </span>
@@ -98,13 +98,13 @@ export function LapAnalysisPanel({ circuitId, myLapTime, myStyle, refLapTime, re
         </div>
         <div className="mt-4 grid grid-cols-4 gap-2">
           {analysis.sectors.map((d, i) => (
-            <div key={i} className="rounded-lg bg-white/5 p-2.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-white/50">Сектор {i + 1}</div>
+            <div key={i} className="rounded-lg bg-ink/5 p-2.5">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted">Сектор {i + 1}</div>
               <div className={cn('font-mono text-lg font-bold', d > 0 ? 'text-red-400' : 'text-green-400')}>{fmtDelta(d)}</div>
             </div>
           ))}
-          <div className="rounded-lg bg-white/10 p-2.5">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-white/50">Коло</div>
+          <div className="rounded-lg bg-ink/10 p-2.5">
+            <div className="text-xs font-bold uppercase tracking-wider text-muted">Коло</div>
             <div className={cn('font-mono text-lg font-bold', analysis.total > 0 ? 'text-red-400' : 'text-green-400')}>{fmtDelta(analysis.total)}</div>
           </div>
         </div>
@@ -119,15 +119,15 @@ export function LapAnalysisPanel({ circuitId, myLapTime, myStyle, refLapTime, re
                 key={i}
                 onMouseEnter={() => setHover(i)}
                 onMouseLeave={() => setHover(null)}
-                className={cn('grid grid-cols-[44px_1fr_64px] items-center gap-2 rounded-md px-2 py-1 text-xs transition', hover === i && 'bg-white/10')}
+                className={cn('grid grid-cols-[44px_1fr_64px] items-center gap-2 rounded-md px-2 py-1 text-xs transition', hover === i && 'bg-ink/10')}
               >
                 <span className="font-mono font-bold">
                   T{s.corner.number}
-                  <span className="ml-0.5 text-[9px] text-white/40">{s.corner.dir}</span>
+                  <span className="ml-0.5 text-xs text-muted">{s.corner.dir}</span>
                 </span>
                 {/* diverging bar: left = gain, right = loss */}
-                <span className="relative h-2 rounded-full bg-white/5">
-                  <span className="absolute inset-y-0 left-1/2 w-px bg-white/30" />
+                <span className="relative h-2 rounded-full bg-ink/5">
+                  <span className="absolute inset-y-0 left-1/2 w-px bg-ink/30" />
                   <motion.span
                     initial={{ width: 0 }}
                     animate={{ width: `${(Math.abs(s.delta) / maxAbs) * 50}%` }}
@@ -146,7 +146,7 @@ export function LapAnalysisPanel({ circuitId, myLapTime, myStyle, refLapTime, re
           <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-violet-300">
             <Sparkles className="h-4 w-4" /> AI-тренер
           </div>
-          <ul className="space-y-2 text-sm leading-snug text-white/90">
+          <ul className="space-y-2 text-sm leading-snug text-ink/80">
             {analysis.tips.map((tip, i) => (
               <motion.li key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.25 }} className="flex gap-2">
                 {tip.startsWith('Сильне') ? (
@@ -158,7 +158,7 @@ export function LapAnalysisPanel({ circuitId, myLapTime, myStyle, refLapTime, re
               </motion.li>
             ))}
           </ul>
-          <div className="mt-3 font-mono text-[10px] text-white/40">Твоє коло {formatLapTime(myLapTime)} · порівняння по поворотах</div>
+          <div className="mt-3 font-mono text-xs text-muted">Твоє коло {formatLapTime(myLapTime)} · порівняння по поворотах</div>
         </div>
       </div>
     </div>

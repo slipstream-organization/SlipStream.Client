@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { driverPhoto } from '../lib/media';
 import { DRIVER_BY_CODE, TEAM_BY_ID } from '../mock/season';
 import type { TeamId } from '../model/types';
@@ -46,19 +46,23 @@ export function TeamBar({ teamId, className }: { teamId: TeamId; className?: str
   return <span className={cn('inline-block w-1 self-stretch rounded-full', className)} style={{ background: TEAM_BY_ID[teamId].color }} />;
 }
 
+/**
+ * Section heading on a heavy editorial rule. `kicker` is plain context (e.g. "Після 18 етапів"),
+ * shown in graphite — not a decorative all-caps eyebrow.
+ */
 export function SectionTitle({ kicker, title, action }: { kicker?: string; title: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mb-6 flex items-end justify-between gap-4">
-      <div>
-        {kicker && <div className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-f1-red">{kicker}</div>}
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b-2 border-rule pb-3">
+      <div className="min-w-0">
         <h2 className="display text-3xl md:text-4xl">{title}</h2>
+        {kicker && <p className="mt-1 text-sm text-muted">{kicker}</p>}
       </div>
       {action}
     </div>
   );
 }
 
-/** Animated segmented control (shared pill slides between options). */
+/** Tab rail: the active option gets a red bar underneath that slides between options (shared layout = transform). */
 export function Segmented<T extends string>({
   value,
   onChange,
@@ -73,23 +77,24 @@ export function Segmented<T extends string>({
   layoutKey: string;
 }) {
   return (
-    <div className="inline-flex rounded-full border border-line bg-surface p-1">
+    <div className="inline-flex max-w-full overflow-x-auto border-b border-line">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           onClick={() => onChange(o.value)}
+          aria-pressed={value === o.value}
           className={cn(
-            'relative flex items-center gap-1.5 rounded-full font-bold uppercase tracking-wide transition-colors',
-            size === 'sm' ? 'px-3 py-1 text-[11px]' : 'px-4 py-1.5 text-xs',
-            value === o.value ? 'text-white' : 'text-muted hover:text-ink',
+            'relative flex shrink-0 items-center gap-1.5 font-semibold [font-stretch:110%]',
+            size === 'sm' ? 'min-h-10 px-3 text-sm' : 'min-h-11 px-4 text-[15px]',
+            value === o.value ? 'text-ink' : 'text-muted hover:text-ink',
           )}
         >
           {value === o.value && (
             <motion.span
               layoutId={`seg-${layoutKey}`}
-              className="absolute inset-0 rounded-full bg-f1-red"
-              transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+              className="absolute inset-x-0 -bottom-px h-[3px] bg-accent"
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             />
           )}
           <span className="relative z-10 flex items-center gap-1.5">{o.label}</span>
@@ -99,10 +104,16 @@ export function Segmented<T extends string>({
   );
 }
 
+/** Waits 100ms before showing so fast loads never flash; keeps its height so nothing jumps. */
 export function Loader({ className }: { className?: string }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShow(true), 100);
+    return () => clearTimeout(t);
+  }, []);
   return (
-    <div className={cn('flex items-center justify-center py-20', className)}>
-      <div className="flex gap-1.5">
+    <div role="status" aria-busy="true" aria-label="Завантаження" className={cn('flex items-center justify-center py-20', className)}>
+      <div className={cn('flex gap-1.5 transition-opacity duration-150', show ? 'opacity-100' : 'opacity-0')}>
         {[0, 1, 2, 3, 4].map((i) => (
           <motion.span
             key={i}

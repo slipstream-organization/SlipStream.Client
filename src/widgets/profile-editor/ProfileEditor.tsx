@@ -1,26 +1,34 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { motion } from 'motion/react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Check, Loader2, X } from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider';
-import { HANDLE_PATTERN, identity, type CurrentUser, type ProfilePatch } from '../../shared/api/identity';
+import { HANDLE_PATTERN, identity, type ProfilePatch, type CurrentUser } from '../../shared/api/identity';
 import { errorMessage, fieldErrors } from '../../shared/api/http';
 import { DRIVERS, TEAMS } from '../../shared/mock/season';
 import { cn } from '../../shared/lib/utils';
+import { Dialog } from '../../shared/ui/Dialog';
+import { Button } from '../../shared/ui/Button';
+import { Select } from '../../shared/ui/Select';
+import { useToast } from '../../shared/ui/Toast';
 
 type HandleState = 'idle' | 'checking' | 'free' | 'taken' | 'invalid';
 
 const SORTED_DRIVERS = [...DRIVERS].sort((a, b) => a.lastName.localeCompare(b.lastName));
+const TEAM_OPTIONS = [{ value: '', label: 'Не обрано' }, ...TEAMS.map((t) => ({ value: t.id as string, label: t.name }))];
+const DRIVER_OPTIONS = [{ value: '', label: 'Не обрано' }, ...SORTED_DRIVERS.map((d) => ({ value: d.code, label: `${d.firstName} ${d.lastName} · ${d.code}` }))];
 
 export function ProfileEditor({ user, onClose }: { user: CurrentUser; onClose: () => void }) {
   const { update } = useAuth();
+  const toast = useToast();
   const [name, setName] = useState(user.name);
   const [handle, setHandle] = useState(user.handle);
   const [team, setTeam] = useState(user.favouriteTeam ?? '');
   const [driver, setDriver] = useState(user.favouriteDriver ?? '');
   const [handleState, setHandleState] = useState<HandleState>('idle');
+  const [handleTouched, setHandleTouched] = useState(false); // errors show only after the first blur
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const handleInput = useRef<HTMLInputElement>(null);
 
   const handleChanged = handle.toLowerCase() !== user.handle.toLowerCase();
 
@@ -44,12 +52,6 @@ export function ProfileEditor({ user, onClose }: { user: CurrentUser; onClose: (
     };
   }, [handle, handleChanged]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   const patch: ProfilePatch = {};
   if (name.trim() !== user.name) patch.name = name.trim();
   if (handle !== user.handle) patch.handle = handle;
@@ -60,12 +62,21 @@ export function ProfileEditor({ user, onClose }: { user: CurrentUser; onClose: (
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!dirty || blocked) return;
+    setFormError(null);
+    if (!dirty) {
+      setFormError('Немає змін для збереження.');
+      return;
+    }
+    if (blocked) {
+      setHandleTouched(true);
+      handleInput.current?.focus();
+      return;
+    }
     setSaving(true);
     setErrors({});
-    setFormError(null);
     try {
       await update(patch);
+      toast('Профіль збережено');
       onClose();
     } catch (error) {
       const fields = fieldErrors(error);
@@ -76,116 +87,122 @@ export function ProfileEditor({ user, onClose }: { user: CurrentUser; onClose: (
     }
   }
 
-  const handleHint =
-    handleChanged && handleState === 'invalid' ? 'Нік має містити 3–32 символи: латинські літери, цифри або _.'
-    : handleChanged && handleState === 'taken' ? 'Цей нік уже зайнятий.'
-    : handleChanged && handleState === 'free' ? 'Нік вільний.'
-    : undefined;
+  const clearField = (key: string) => {
+    setFormError(null);
+    if (errors[key]) setErrors((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => k !== key)));
+  };
+
+  const handleError =
+    errors.handle ??
+    (handleChanged && handleTouched && handleState === 'invalid' ? 'Нік має містити 3–32 символи: латинські літери, цифри або _.'
+    : handleChanged && handleTouched && handleState === 'taken' ? 'Цей нік уже зайнятий — спробуйте інший.'
+    : undefined);
+  const handleHint = handleChanged && handleState === 'free' ? 'Нік вільний.' : undefined;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[60] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.form
-        initial={{ y: 24, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 16, opacity: 0 }}
-        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={submit}
-        className="w-full max-w-lg rounded-[18px] border border-line bg-bg p-6 text-ink md:p-8"
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-xs font-bold uppercase tracking-[0.25em] text-muted">Профіль</div>
-            <h2 className="display mt-1 text-3xl">Редагування</h2>
+    <Dialog label="Редагування профілю" onClose={onClose} onSubmit={submit} panelClassName="max-w-lg p-6 md:p-8">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-sm text-muted">Профіль</div>
+          <h2 className="display mt-1 text-3xl">Редагування</h2>
+        </div>
+        <button type="button" onClick={onClose} className="press grid h-11 w-11 shrink-0 place-items-center rounded-full border border-line" aria-label="Закрити">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="mt-6 flex flex-col gap-4">
+        <Field label="Ім'я" error={errors.name}>
+          <input
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              clearField('name');
+            }}
+            maxLength={64}
+            autoComplete="name"
+            className={inputClass(errors.name)}
+          />
+        </Field>
+
+        <Field
+          label="Нік"
+          error={handleError}
+          hint={handleHint}
+          adornment={
+            handleChanged && handleState === 'checking' ? <Loader2 className="h-4 w-4 animate-spin text-muted" aria-label="Перевіряємо нік" />
+            : handleChanged && handleState === 'free' ? <Check className="h-4 w-4 text-positive" aria-hidden />
+            : null
+          }
+        >
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">@</span>
+            <input
+              ref={handleInput}
+              value={handle}
+              onChange={(e) => {
+                setHandle(e.target.value.trim());
+                clearField('handle');
+              }}
+              onFocus={() => setHandleTouched(false)}
+              onBlur={() => setHandleTouched(true)}
+              maxLength={32}
+              autoComplete="username"
+              aria-invalid={!!handleError}
+              className={cn(inputClass(handleError), 'pl-7')}
+            />
           </div>
-          <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center rounded-full border border-line" aria-label="Закрити">
-            <X className="h-4 w-4" />
-          </button>
+        </Field>
+
+        <Field custom label="Улюблена команда" error={errors.favouriteTeam}>
+          <Select value={team} onChange={(v) => { setTeam(v); clearField('favouriteTeam'); }} options={TEAM_OPTIONS} aria-label="Улюблена команда" invalid={!!errors.favouriteTeam} />
+        </Field>
+
+        <Field custom label="Улюблений пілот" error={errors.favouriteDriver}>
+          <Select value={driver} onChange={(v) => { setDriver(v); clearField('favouriteDriver'); }} options={DRIVER_OPTIONS} aria-label="Улюблений пілот" invalid={!!errors.favouriteDriver} />
+        </Field>
+      </div>
+
+      {formError && (
+        <div role="alert" className="mt-5 rounded-md border border-f1-red/40 bg-f1-red/10 px-4 py-3 text-sm">
+          {formError}
         </div>
+      )}
 
-        <div className="mt-6 flex flex-col gap-4">
-          <Field label="Ім'я" error={errors.name}>
-            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={64} className={inputClass(errors.name)} />
-          </Field>
-
-          <Field
-            label="Нік"
-            error={errors.handle ?? (handleState === 'taken' || handleState === 'invalid' ? handleHint : undefined)}
-            hint={handleState === 'free' ? handleHint : undefined}
-            adornment={
-              handleChanged && handleState === 'checking' ? <Loader2 className="h-4 w-4 animate-spin text-muted" />
-              : handleChanged && handleState === 'free' ? <Check className="h-4 w-4 text-emerald-500" />
-              : null
-            }
-          >
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">@</span>
-              <input value={handle} onChange={(e) => setHandle(e.target.value.trim())} maxLength={32} className={cn(inputClass(errors.handle), 'pl-7')} />
-            </div>
-          </Field>
-
-          <Field label="Улюблена команда" error={errors.favouriteTeam}>
-            <select value={team} onChange={(e) => setTeam(e.target.value)} className={inputClass(errors.favouriteTeam)}>
-              <option value="">Не обрано</option>
-              {TEAMS.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Улюблений пілот" error={errors.favouriteDriver}>
-            <select value={driver} onChange={(e) => setDriver(e.target.value)} className={inputClass(errors.favouriteDriver)}>
-              <option value="">Не обрано</option>
-              {SORTED_DRIVERS.map((d) => (
-                <option key={d.code} value={d.code}>{d.firstName} {d.lastName} · {d.code}</option>
-              ))}
-            </select>
-          </Field>
-        </div>
-
-        {formError && (
-          <div role="alert" className="mt-5 rounded-lg border border-f1-red/40 bg-f1-red/10 px-4 py-3 text-sm">{formError}</div>
-        )}
-
-        <div className="mt-7 flex justify-end gap-3">
-          <button type="button" onClick={onClose} className="rounded-full border border-line px-5 py-2.5 text-sm font-bold uppercase tracking-wide">
-            Скасувати
-          </button>
-          <button
-            type="submit"
-            disabled={!dirty || blocked || saving}
-            className="flex items-center gap-2 rounded-full bg-f1-red px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity disabled:opacity-40"
-          >
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            Зберегти
-          </button>
-        </div>
-      </motion.form>
-    </motion.div>
+      <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button variant="secondary" onClick={onClose}>
+          Скасувати
+        </Button>
+        <Button type="submit" loading={saving}>
+          Зберегти зміни
+        </Button>
+      </div>
+    </Dialog>
   );
 }
 
-function Field({ label, error, hint, adornment, children }: { label: string; error?: string; hint?: string; adornment?: ReactNode; children: ReactNode }) {
+function Field({ label, error, hint, adornment, custom, children }: { label: string; error?: string; hint?: string; adornment?: ReactNode; custom?: boolean; children: ReactNode }) {
+  // custom controls (dropdown) must not sit inside <label>: it would re-forward clicks on options to the trigger
+  const Wrap = custom ? 'div' : 'label';
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="flex items-center justify-between text-xs font-bold uppercase tracking-wide text-muted">
-        {label}
-        {adornment}
+    <div className="flex flex-col gap-1.5">
+      <Wrap className="flex flex-col gap-1.5">
+        <span className="flex items-center justify-between text-sm font-medium text-muted">
+          {label}
+          {adornment}
+        </span>
+        {children}
+      </Wrap>
+      {/* reserved line: helper and error share one slot so the form never jumps */}
+      <span role={error ? 'alert' : undefined} className={cn('min-h-5 text-xs', error ? 'text-accent-ink' : 'text-positive')}>
+        {error ?? hint ?? ''}
       </span>
-      {children}
-      {error ? <span className="text-xs text-f1-red">{error}</span> : hint ? <span className="text-xs text-emerald-500">{hint}</span> : null}
-    </label>
+    </div>
   );
 }
 
 const inputClass = (error?: string) =>
   cn(
-    'w-full rounded-lg border bg-bg px-3 py-2.5 text-sm outline-none transition-colors focus:border-f1-red',
+    'min-h-11 w-full rounded-md border bg-bg px-3 py-2.5 text-sm outline-none transition-colors focus:border-f1-red',
     error ? 'border-f1-red' : 'border-line',
   );

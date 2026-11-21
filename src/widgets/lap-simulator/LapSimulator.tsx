@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
+import { ACESFilmicToneMapping, SRGBColorSpace } from 'three';
 import { Maximize2, Pause, Play, RotateCcw } from 'lucide-react';
 import { getLap, getProLap } from './lapModel';
 import { TrackScene, type CameraMode } from './TrackScene';
 import { SimClock } from './simClock';
 import { CIRCUITS } from '../../shared/data/circuits';
+import { DRIVER_BY_CODE } from '../../shared/mock/season';
+import type { TeamId } from '../../shared/model/types';
 import { cn, formatLapTime } from '../../shared/lib/utils';
 
 /** One car on track. The first run is the main (grey) car, the rest are coloured ghosts. */
@@ -15,6 +18,8 @@ export interface SimRun {
   color: string;
   /** amateur driving-style seed; omit for pro laps (they get a subtle style of their own) */
   style?: number;
+  /** team for the 3D model + livery; derived from the driver code in `detail` for pro laps when omitted */
+  teamId?: TeamId;
 }
 
 export interface LapSimulatorProps {
@@ -40,7 +45,7 @@ export default function LapSimulator({ circuitId, title, runs, autoPlay = true, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [circuit, runsKey],
   );
-  const sceneRuns = useMemo(() => laps.map((lap, k) => ({ lap, color: runs[k].color, ghost: k > 0 })), [laps, runs]);
+  const sceneRuns = useMemo(() => laps.map((lap, k) => ({ lap, color: runs[k].color, ghost: k > 0, teamId: teamOf(runs[k]) })), [laps, runs]);
   const main = laps[0];
   const period = Math.max(...laps.map((l) => l.lapTime)) + 1.5;
 
@@ -78,33 +83,44 @@ export default function LapSimulator({ circuitId, title, runs, autoPlay = true, 
   const toastEl = useRef<HTMLDivElement>(null);
   const prevT = useRef(0);
 
+  // per-frame scratch for the HUD — no arrays created in the render loop, no DOM writes when nothing changed
+  const passedBuf = useRef(new Float64Array(16));
+  const lastText = useRef<string[]>([]);
+
   const onTick = useCallback(
     (t: number, indices: number[]) => {
+      const write = (key: number, el: HTMLElement | null | undefined, text: string) => {
+        if (!el || lastText.current[key] === text) return false;
+        lastText.current[key] = text;
+        el.textContent = text;
+        return true;
+      };
       const tm = Math.min(t, main.lapTime);
       if (progressEl.current) progressEl.current.style.transform = `scaleX(${tm / main.lapTime})`;
-      laps.forEach((l, k) => {
-        const el = timeEls.current[k];
-        if (el) el.textContent = formatLapTime(Math.min(t, l.lapTime));
-      });
+      for (let k = 0; k < laps.length; k++) write(k, timeEls.current[k], formatLapTime(Math.min(t, laps[k].lapTime)));
 
       // live gap: compare times at the main car's current distance
       const i0 = Math.min(main.n - 1, Math.floor(indices[0]));
-      const passed = laps.map((l) => (t >= main.lapTime ? l.lapTime : l.time[i0]));
+      if (passedBuf.current.length < laps.length) passedBuf.current = new Float64Array(laps.length);
+      const passed = passedBuf.current;
+      let lead = Infinity;
+      for (let k = 0; k < laps.length; k++) {
+        passed[k] = t >= main.lapTime ? laps[k].lapTime : laps[k].time[i0];
+        if (passed[k] < lead) lead = passed[k];
+      }
       for (let k = 1; k < laps.length; k++) {
         const gap = passed[0] - passed[k];
         const text = `${gap >= 0 ? '+' : '−'}${Math.abs(gap).toFixed(3)}`;
         const el = gapEls.current[k];
-        if (el) {
-          el.textContent = text;
-          el.style.color = gap > 0.0005 ? '#ff6b6b' : '#4ade80';
-        }
-        if (k === 1 && bigGapEl.current) bigGapEl.current.textContent = text;
+        if (write(100 + k, el, text) && el) el.style.color = gap > 0.0005 ? 'var(--c-negative)' : 'var(--c-positive)';
+        if (k === 1) write(200, bigGapEl.current, text);
       }
-      const lead = Math.min(...passed);
-      passed.forEach((p, k) => {
+      // ruler markers move on the compositor: each marker sits at the right edge of a full-width
+      // wrapper, and the wrapper is shifted left by the gap share (transform only, no layout)
+      for (let k = 0; k < laps.length; k++) {
         const el = markerEls.current[k];
-        if (el) el.style.right = `${Math.min(1, (p - lead) / ruler.range) * 100}%`;
-      });
+        if (el) el.style.transform = `translate3d(${-Math.min(1, (passed[k] - lead) / ruler.range) * 100}%,0,0)`;
+      }
 
       if (prevT.current < main.lapTime && t >= main.lapTime && toastEl.current) {
         toastEl.current.animate([{ opacity: 0, transform: 'translate(-50%, 8px)' }, { opacity: 1, transform: 'translate(-50%, 0)' }, { opacity: 1 }, { opacity: 0 }], {
@@ -144,42 +160,45 @@ export default function LapSimulator({ circuitId, title, runs, autoPlay = true, 
   };
 
   return (
-    <div ref={root} className={cn('relative isolate aspect-[4/5] w-full overflow-hidden rounded-xl bg-[#050507] font-mono text-white select-none sm:aspect-video', className)}>
+    <div ref={root} className={cn('relative isolate aspect-[4/5] w-full overflow-hidden rounded-xl bg-surface-2 font-mono text-ink select-none sm:aspect-video', className)}>
       <Canvas
         shadows="soft"
-        dpr={[1, 1.5]}
+        dpr={[1, 2]}
         resize={{ offsetSize: true }}
         frameloop={visible ? 'always' : 'never'}
         camera={{ fov: 45, near: 0.5, far: 30000, position: [0, 600, 600] }}
-        gl={{ antialias: true, logarithmicDepthBuffer: true }}
+        gl={{ antialias: true, powerPreference: "high-performance" }}
         onCreated={({ gl }) => {
-          // the scene is static apart from the cars → render shadows on demand only
+          // filmic daylight look; shadows are re-rendered by the scene itself (only where the camera looks)
           gl.shadowMap.autoUpdate = false;
+          gl.toneMapping = ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.1;
+          gl.outputColorSpace = SRGBColorSpace;
         }}
       >
-        <TrackScene runs={sceneRuns} period={period} clock={clock} cameraMode={cam} onTick={onTick} />
+        <TrackScene circuitId={circuitId} runs={sceneRuns} period={period} clock={clock} cameraMode={cam} onTick={onTick} />
       </Canvas>
 
       {/* side vignette so the HUD reads over the scene */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black/70 to-transparent sm:w-[38%]" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-bg/80 to-transparent sm:w-[38%]" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-bg/80 to-transparent" />
 
       {/* title + camera */}
-      <div className="absolute inset-x-0 top-0 flex items-center gap-3 bg-gradient-to-b from-black/70 to-transparent p-3 sm:p-4">
-        <div className="pointer-events-none flex min-w-0 items-center gap-3 text-[10px] tracking-[0.18em] sm:text-xs">
-          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-white/50">
-            <span className="h-1.5 w-1.5 rounded-full bg-white" />
+      <div className="absolute inset-x-0 top-0 flex items-center gap-3 bg-gradient-to-b from-bg/80 to-transparent p-3 sm:p-4">
+        <div className="pointer-events-none flex min-w-0 items-center gap-3 text-xs tracking-[0.18em] sm:text-xs">
+          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-ink/50">
+            <span className="h-1.5 w-1.5 rounded-full bg-ink" />
           </span>
           <span className="font-bold tracking-normal">slipstream</span>
-          <span className="truncate uppercase text-white/75">{title}</span>
+          <span className="truncate uppercase text-ink/80">{title}</span>
         </div>
-        <div className="ml-auto flex shrink-0 gap-1 rounded-full bg-black/50 p-1 backdrop-blur">
+        <div className="ml-auto flex shrink-0 gap-1 rounded-full bg-bg/70 p-1">
           {CAMS.map((c) => (
             <button
               key={c.id}
               type="button"
               onClick={() => setCam(c.id)}
-              className={cn('rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wider transition sm:text-xs', cam === c.id ? 'bg-white text-black' : 'text-white/70 hover:text-white')}
+              className={cn('rounded-full px-2.5 py-1 text-xs uppercase tracking-wider transition sm:text-xs', cam === c.id ? 'bg-ink text-bg' : 'text-ink/80 hover:text-ink')}
             >
               {c.label}
             </button>
@@ -199,12 +218,12 @@ export default function LapSimulator({ circuitId, title, runs, autoPlay = true, 
             </div>
             <div className="min-w-0">
               <div className="truncate font-sport text-xs font-bold uppercase leading-tight sm:text-base">{r.label}</div>
-              {r.detail && <div className="truncate text-[9px] uppercase tracking-[0.22em] text-white/55 sm:text-[10px]">{r.detail}</div>}
+              {r.detail && <div className="truncate text-xs uppercase tracking-[0.22em] text-muted sm:text-xs">{r.detail}</div>}
               <div className="flex items-baseline gap-2">
                 <span ref={(el) => void (timeEls.current[k] = el)} className="font-sport text-lg font-bold leading-tight tabular-nums sm:text-[28px]">
                   0:00.000
                 </span>
-                {k > 0 && <span ref={(el) => void (gapEls.current[k] = el)} className="text-[10px] tabular-nums sm:text-xs">+0.000</span>}
+                {k > 0 && <span ref={(el) => void (gapEls.current[k] = el)} className="text-xs tabular-nums sm:text-xs">+0.000</span>}
               </div>
             </div>
           </li>
@@ -215,12 +234,12 @@ export default function LapSimulator({ circuitId, title, runs, autoPlay = true, 
       {runs.length > 1 && (
         <div className="pointer-events-none absolute inset-x-3 bottom-14 sm:bottom-6 sm:left-auto sm:right-5 sm:w-[56%]">
           <div className="mb-2 text-right">
-            <div className="text-[9px] uppercase tracking-[0.22em] text-white/50 sm:text-[10px]">vs {runs[1].label}</div>
+            <div className="text-xs uppercase tracking-[0.22em] text-muted sm:text-xs">vs {runs[1].label}</div>
             <span ref={bigGapEl} className="font-sport text-4xl font-bold leading-none tabular-nums sm:text-6xl">
               +0.000
             </span>
           </div>
-          <div className="relative h-3.5 text-[8px] text-white/60 sm:text-[9px]">
+          <div className="relative h-3.5 text-[8px] text-muted sm:text-xs">
             {ruler.ticks.map((i) => (
               <span key={i} className={cn('absolute translate-x-1/2 tabular-nums', i % 5 && 'hidden sm:block')} style={{ right: `${(i / (ruler.ticks.length - 1)) * 100}%` }}>
                 {(i * ruler.step).toFixed(ruler.step < 1 ? 1 : 0)}
@@ -232,16 +251,17 @@ export default function LapSimulator({ circuitId, title, runs, autoPlay = true, 
               {ruler.ticks.map((i) => (
                 <span
                   key={i}
-                  className={cn('absolute top-1/2 w-px -translate-y-1/2', i % 5 ? 'h-2 bg-white/25' : 'h-4 bg-white/50')}
+                  className={cn('absolute top-1/2 w-px -translate-y-1/2', i % 5 ? 'h-2 bg-ink/25' : 'h-4 bg-ink/50')}
                   style={{ right: `${(i / (ruler.ticks.length - 1)) * 100}%` }}
                 />
               ))}
-              <div
-                ref={(el) => void (markerEls.current[k] = el)}
-                className="absolute top-1/2 -translate-y-1/2 rounded-sm px-1.5 py-0.5 font-sport text-[10px] font-black text-black/85 sm:text-xs"
-                style={{ right: 0, background: r.color, boxShadow: `0 0 14px ${r.color}` }}
-              >
-                {runCode(r)}
+              <div ref={(el) => void (markerEls.current[k] = el)} className="pointer-events-none absolute inset-0 will-change-transform">
+                <div
+                  className="absolute right-0 top-1/2 -translate-y-1/2 rounded-sm px-1.5 py-0.5 font-sport text-xs font-black text-black/85 sm:text-xs"
+                  style={{ background: r.color, boxShadow: `0 0 14px ${r.color}` }}
+                >
+                  {runCode(r)}
+                </div>
               </div>
             </div>
           ))}
@@ -249,14 +269,14 @@ export default function LapSimulator({ circuitId, title, runs, autoPlay = true, 
       )}
 
       {/* lap-complete toast */}
-      <div ref={toastEl} className="pointer-events-none absolute left-1/2 top-[40%] -translate-x-1/2 rounded-md bg-black/65 px-4 py-2 text-center opacity-0 backdrop-blur">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-white/60">{runs[0].label}</div>
+      <div ref={toastEl} className="pointer-events-none absolute left-1/2 top-[40%] -translate-x-1/2 rounded-md border border-line bg-surface/90 px-4 py-2 text-center opacity-0">
+        <div className="text-xs uppercase tracking-[0.2em] text-muted">{runs[0].label}</div>
         <div className="text-2xl font-bold">{formatLapTime(main.lapTime)}</div>
       </div>
 
       {/* controls */}
       <div className="absolute bottom-4 left-3 sm:left-5">
-        <div className="flex items-center gap-1 rounded-full bg-black/50 p-1 backdrop-blur">
+        <div className="flex items-center gap-1 rounded-full bg-bg/70 p-1">
           <IconBtn label={playing ? 'Пауза' : 'Відтворити'} onClick={() => setPlaying((p) => !p)}>
             {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </IconBtn>
@@ -274,7 +294,7 @@ export default function LapSimulator({ circuitId, title, runs, autoPlay = true, 
               key={r}
               type="button"
               onClick={() => setRate(r)}
-              className={cn('rounded-full px-2 py-1 text-[10px] transition sm:text-xs', rate === r ? 'bg-white text-black' : 'text-white/70 hover:text-white')}
+              className={cn('rounded-full px-2 py-1 text-xs transition sm:text-xs', rate === r ? 'bg-ink text-bg' : 'text-ink/80 hover:text-ink')}
             >
               {r}×
             </button>
@@ -295,7 +315,7 @@ export default function LapSimulator({ circuitId, title, runs, autoPlay = true, 
         onPointerMove={(e) => e.buttons === 1 && seek(e)}
         title="Клікни, щоб перемотати"
       >
-        <div className="absolute inset-x-0 bottom-0 h-[3px] bg-white/15 transition-all group-hover:h-[6px]">
+        <div className="absolute inset-x-0 bottom-0 h-[3px] bg-ink/15 transition-all group-hover:h-[6px]">
           <div ref={progressEl} className="h-full origin-left bg-f1-red" style={{ transform: 'scaleX(0)' }} />
         </div>
       </div>
@@ -310,8 +330,15 @@ function runCode(r: SimRun) {
 
 function IconBtn({ children, label, onClick }: { children: React.ReactNode; label: string; onClick: () => void }) {
   return (
-    <button type="button" aria-label={label} title={label} onClick={onClick} className="grid h-7 w-7 place-items-center rounded-full text-white/80 transition hover:bg-white/15 hover:text-white">
+    <button type="button" aria-label={label} title={label} onClick={onClick} className="grid h-7 w-7 place-items-center rounded-full text-ink/80 transition hover:bg-ink/15 hover:text-ink">
       {children}
     </button>
   );
+}
+
+/** Team of a run: explicit, or the current team of the driver named in `detail` (pro laps only — user laps carry a handle there). */
+function teamOf(r: SimRun): TeamId | undefined {
+  if (r.teamId) return r.teamId;
+  if (r.style !== undefined || !r.detail) return undefined;
+  return DRIVER_BY_CODE[r.detail.split(/[\s·]+/)[0].toUpperCase()]?.teamId;
 }

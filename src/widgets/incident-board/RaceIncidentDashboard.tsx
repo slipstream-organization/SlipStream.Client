@@ -23,12 +23,12 @@ export const RaceIncidentsDashboard: React.FC = () => {
         </h2>
         
         <div className="flex gap-3">
-          <div className="bg-f1-red text-white px-4 py-1 skew-x-[-12deg] shadow-sm">
+          <div className="bg-f1-red text-on-accent px-4 py-1 skew-x-[-12deg] shadow-sm">
             <span className="block skew-x-[12deg] font-bold italic text-sm">
               Track Limits: {trackLimitsProb}%
             </span>
           </div>
-          <div className={`text-white px-4 py-1 skew-x-[-12deg] shadow-sm transition-colors duration-500 ${stressLevel > 90 ? 'bg-team-ferrari' : 'bg-team-aston'}`}>
+          <div className={`text-white px-4 py-1 skew-x-[-12deg] shadow-sm transition-colors duration-300 ${stressLevel > 90 ? 'bg-team-ferrari' : 'bg-team-aston'}`}>
             <span className="block skew-x-[12deg] font-bold italic text-sm">
               Stress ML: {Math.round(stressLevel)}%
             </span>
@@ -49,7 +49,7 @@ export const RaceIncidentsDashboard: React.FC = () => {
             <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
           </video>
           
-          <div className="absolute top-4 left-4 bg-black/90 px-3 py-1 border-l-4 border-f1-red text-white uppercase italic font-bold text-xs backdrop-blur-sm">
+          <div className="absolute top-4 left-4 bg-black/90 px-3 py-1 border-l-4 border-f1-red text-white uppercase italic font-bold text-xs">
             LIVE / LAP 42 / TURN 4
           </div>
         </div>

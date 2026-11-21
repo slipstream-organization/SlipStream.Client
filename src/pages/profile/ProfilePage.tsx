@@ -5,6 +5,8 @@ import { Activity, Award, Box, CheckCircle2, LogOut, Pencil, Play, Target, Trend
 import { useAuth } from '../../app/providers/AuthProvider';
 import { UserAvatar } from '../../shared/ui/UserAvatar';
 import { ProfileEditor } from '../../widgets/profile-editor/ProfileEditor';
+import { Tag } from '../../shared/ui/Tag';
+import { Dialog } from '../../shared/ui/Dialog';
 import { api, isCompleted } from '../../shared/api';
 import { useData } from '../../shared/lib/useData';
 import type { UserLap, UserProfile } from '../../shared/mock/profile';
@@ -57,7 +59,7 @@ function ProfileHeader({ me, avatarUrl, onEdit }: { me: UserProfile; avatarUrl: 
   const navigate = useNavigate();
   const team: Team | undefined = TEAM_BY_ID[me.favouriteTeam as TeamId];
   const driver: Driver | undefined = DRIVER_BY_CODE[me.favouriteDriver];
-  const accent = team?.color ?? '#e10600';
+  const accent = team?.color ?? 'var(--c-accent)';
   const pct = me.xp / me.xpNext;
 
   const signOut = async (everywhere: boolean) => {
@@ -66,21 +68,21 @@ function ProfileHeader({ me, avatarUrl, onEdit }: { me: UserProfile; avatarUrl: 
   };
 
   return (
-    <motion.section variants={stagger(0.08)} initial="hidden" animate="show" className="relative overflow-hidden rounded-[18px] border border-white/10 bg-[#0b0b0f] p-6 text-white md:p-10">
-      <div className="pointer-events-none absolute inset-0" style={{ background: `radial-gradient(circle at 85% 20%, ${accent}55, transparent 50%)` }} />
+    <motion.section variants={stagger(0.08)} initial="hidden" animate="show" className="relative overflow-hidden rounded-lg border border-line bg-surface p-6 text-ink md:p-10">
+      <div className="pointer-events-none absolute inset-0" style={{ background: `radial-gradient(circle at 85% 20%, color-mix(in srgb, ${accent} 33%, transparent), transparent 50%)` }} />
       <div className="speed-stripes pointer-events-none absolute -left-10 bottom-6 h-2 w-1/3 opacity-60" />
       <div className="relative grid items-center gap-8 md:grid-cols-[auto_1fr_auto]">
         <motion.div variants={fadeUp} className="relative h-28 w-28 md:h-32 md:w-32">
           <svg viewBox="0 0 120 120" className="h-28 w-28 -rotate-90 md:h-32 md:w-32">
-            <circle cx="60" cy="60" r="54" stroke="rgba(255,255,255,.1)" strokeWidth="6" fill="none" />
-            <motion.circle cx="60" cy="60" r="54" stroke="#e10600" strokeWidth="6" fill="none" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: pct }} transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }} />
+            <circle cx="60" cy="60" r="54" className="stroke-ink/10" strokeWidth="6" fill="none" />
+            <motion.circle cx="60" cy="60" r="54" className="stroke-accent" strokeWidth="6" fill="none" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: pct }} transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }} />
           </svg>
           <UserAvatar name={me.name} avatarUrl={avatarUrl} className="absolute inset-3 text-4xl" />
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-black">LVL {me.level}</div>
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-ink px-2 py-0.5 font-mono text-xs font-bold text-bg text-center">LVL {me.level}</div>
         </motion.div>
 
         <motion.div variants={fadeUp}>
-          <div className="text-xs font-bold uppercase tracking-[0.25em] text-white/50">@{me.handle}</div>
+          <div className="text-xs font-bold uppercase tracking-[0.25em] text-muted">@{me.handle}</div>
           <h1 className="display mt-1 text-5xl md:text-6xl">{me.name}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             {team && (
@@ -89,44 +91,44 @@ function ProfileHeader({ me, avatarUrl, onEdit }: { me: UserProfile; avatarUrl: 
               </span>
             )}
             {driver && (
-              <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 font-bold">
+              <span className="flex items-center gap-1.5 rounded-full bg-ink/10 px-3 py-1 font-bold">
                 <Flag code={driver.country} className="h-4 w-4 ring-0" /> {driver.firstName} {driver.lastName}
               </span>
             )}
             {!team && !driver && (
-              <button type="button" onClick={onEdit} className="rounded-full border border-dashed border-white/30 px-3 py-1 font-bold text-white/60 hover:text-white">
+              <button type="button" onClick={onEdit} className="rounded-full border border-dashed border-ink/30 px-3 py-1 font-bold text-muted hover:text-ink">
                 Обрати команду і пілота
               </button>
             )}
           </div>
           <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold uppercase tracking-wide">
-            <button type="button" onClick={onEdit} className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-black">
+            <button type="button" onClick={onEdit} className="flex items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-bg">
               <Pencil className="h-3.5 w-3.5" /> Редагувати
             </button>
-            <button type="button" onClick={() => signOut(false)} className="flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 text-white/80 hover:text-white">
+            <button type="button" onClick={() => signOut(false)} className="flex items-center gap-1.5 rounded-full border border-ink/20 px-3 py-1.5 text-ink/80 hover:text-ink">
               <LogOut className="h-3.5 w-3.5" /> Вийти
             </button>
-            <button type="button" onClick={() => signOut(true)} className="rounded-full border border-white/10 px-3 py-1.5 text-white/50 hover:text-white">
+            <button type="button" onClick={() => signOut(true)} className="rounded-full border border-line px-3 py-1.5 text-muted hover:text-ink">
               Вийти на всіх пристроях
             </button>
           </div>
           <div className="mt-4 max-w-sm">
-            <div className="mb-1 flex justify-between font-mono text-[11px] text-white/60">
+            <div className="mb-1 flex justify-between font-mono text-xs text-muted">
               <span>XP</span>
               <span>
                 {me.xp} / {me.xpNext}
               </span>
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="h-1.5 overflow-hidden rounded-full bg-ink/10">
               <motion.div className="h-full bg-f1-red" initial={{ width: 0 }} animate={{ width: `${pct * 100}%` }} transition={{ duration: 1.2, delay: 0.4 }} />
             </div>
           </div>
         </motion.div>
 
         <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3 md:grid-cols-1 md:text-right">
-          <BigStat label="Рейтинг" value={String(me.rating)} extra={<span className="text-emerald-400">▲{me.ratingDelta}</span>} />
+          <BigStat label="Рейтинг" value={String(me.rating)} extra={<span className="text-positive">▲{me.ratingDelta}</span>} />
           <BigStat label="Ліга" value={me.tier} />
-          <BigStat label="Глобально" value={`#${me.globalRank}`} extra={<span className="text-white/40">з {me.totalPlayers.toLocaleString('uk-UA')}</span>} />
+          <BigStat label="Глобально" value={`#${me.globalRank}`} extra={<span className="text-muted">з {me.totalPlayers.toLocaleString('uk-UA')}</span>} />
         </motion.div>
       </div>
     </motion.section>
@@ -136,9 +138,9 @@ function ProfileHeader({ me, avatarUrl, onEdit }: { me: UserProfile; avatarUrl: 
 function BigStat({ label, value, extra }: { label: string; value: string; extra?: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">{label}</div>
+      <div className="text-xs font-bold uppercase tracking-[0.2em] text-muted">{label}</div>
       <div className="display text-2xl md:text-3xl">{value}</div>
-      {extra && <div className="font-mono text-[11px]">{extra}</div>}
+      {extra && <div className="font-mono text-xs">{extra}</div>}
     </div>
   );
 }
@@ -152,7 +154,7 @@ function PredictionStats({ me }: { me: UserProfile }) {
         kicker="Bold predictions"
         title="Мої прогнози"
         action={
-          <Link to="/game" className="flex items-center gap-1.5 text-xs font-bold uppercase text-muted transition hover:text-f1-red">
+          <Link to="/game" className="flex items-center gap-1.5 text-xs font-bold uppercase text-muted transition hover:text-accent-ink">
             <Target className="h-4 w-4" /> Зробити прогноз
           </Link>
         }
@@ -171,7 +173,7 @@ function PredictionStats({ me }: { me: UserProfile }) {
             const best = p.points === max;
             return (
               <div key={p.round} className="group relative flex h-full flex-1 flex-col justify-end">
-                <span className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-ink px-1.5 py-0.5 font-mono text-[10px] text-bg opacity-0 transition group-hover:opacity-100">
+                <span className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-ink px-1.5 py-0.5 font-mono text-xs text-bg opacity-0 transition group-hover:opacity-100">
                   {race?.country}: {p.points}
                 </span>
                 <motion.div
@@ -181,7 +183,7 @@ function PredictionStats({ me }: { me: UserProfile }) {
                   viewport={{ once: true }}
                   transition={{ duration: 0.7, delay: i * 0.03, ease: 'easeOut' }}
                 />
-                <span className="mt-1 text-center font-mono text-[9px] text-muted">{race?.countryCode.toUpperCase()}</span>
+                <span className="mt-1 text-center font-mono text-xs text-muted">{race?.countryCode.toUpperCase()}</span>
               </div>
             );
           })}
@@ -194,8 +196,8 @@ function PredictionStats({ me }: { me: UserProfile }) {
 function Kpi({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="card p-4">
-      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
-        <span className="text-f1-red">{icon}</span>
+      <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
+        <span className="text-accent-ink">{icon}</span>
         {label}
       </div>
       <div className="display mt-2 text-3xl">{value}</div>
@@ -245,24 +247,45 @@ function MyLaps({ me }: { me: UserProfile }) {
           const delta = l.lapTime - poleTime;
           const pct = (delta / poleTime) * 100;
           return (
-            <motion.button variants={fadeUp} key={l.circuitId} type="button" onClick={() => setOpen(l)} className="group card relative flex items-center gap-4 overflow-hidden p-4 text-left transition hover:-translate-y-0.5 hover:border-f1-red/50">
-              <TrackOutline circuitId={l.circuitId} className="h-12 w-20 shrink-0 text-ink/60 transition group-hover:text-f1-red" strokeWidth={2.5} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <Flag code={race.countryCode} className="h-4 w-4 ring-0" />
-                  <span className="truncate font-bold">{CIRCUITS[l.circuitId].name}</span>
+            <motion.button
+              variants={fadeUp}
+              key={l.circuitId}
+              type="button"
+              onClick={() => setOpen(l)}
+              aria-label={`Переглянути коло: ${CIRCUITS[l.circuitId].name}, ${formatLapTime(l.lapTime)}`}
+              // three columns: circuit | data (may shrink, never overlaps) | play
+              className="group card grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-x-4 p-4 text-left hover:border-rule"
+            >
+              <TrackOutline circuitId={l.circuitId} className="h-12 w-full text-muted group-hover:text-accent-ink" strokeWidth={2.5} />
+              <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-2">
+                  <Flag code={race.countryCode} className="h-4 w-4 shrink-0 ring-0" />
+                  <span className="truncate font-semibold">{CIRCUITS[l.circuitId].name}</span>
                 </div>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="font-mono text-2xl font-bold">{formatLapTime(l.lapTime)}</span>
-                  {l.isNew && <span className="shrink-0 rounded bg-violet-500 px-1.5 py-0.5 text-[9px] font-black uppercase text-white">PB</span>}
-                  {l.source && <span className="shrink-0 rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase text-muted">{l.source === 'steam' ? 'Steam' : 'exe'}{l.attempts ? ` · ${l.attempts} спр.` : ''}</span>}
-                </div>
-                <div className="font-mono text-xs text-muted">
-                  поул {realPole ? `${realPole.year} ${realPole.code}` : ''} {formatLapTime(poleTime)} · <span className={pct < 3 ? 'text-emerald-500' : 'text-orange-500'}>{delta < 0 ? '−' : '+'}{Math.abs(delta).toFixed(3)} ({pct.toFixed(1)}%)</span>
+                <div className="digits mt-1 text-2xl font-bold leading-tight">{formatLapTime(l.lapTime)}</div>
+                {(l.isNew || l.source) && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {l.isNew && <Tag tone="purple">Особистий рекорд</Tag>}
+                    {l.source && (
+                      <span className="text-xs text-muted">
+                        {l.source === 'steam' ? 'Steam' : 'exe'}
+                        {l.attempts ? `, ${l.attempts} спроб` : ''}
+                      </span>
+                    )}
+                  </div>
+                )}
+                <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 text-xs">
+                  <span className="tnum text-muted">
+                    Поул {realPole ? `${realPole.year} ${realPole.code}` : ''} <span className="digits">{formatLapTime(poleTime)}</span>
+                  </span>
+                  <span className={cn('digits font-semibold', pct < 3 ? 'text-sector-green' : 'text-sector-yellow')}>
+                    {delta < 0 ? '−' : '+'}
+                    {Math.abs(delta).toFixed(3)} ({pct.toFixed(1)}%)
+                  </span>
                 </div>
               </div>
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface-2 transition group-hover:bg-f1-red group-hover:text-white">
-                <Play className="ml-0.5 h-4 w-4" />
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-surface-2 group-hover:bg-accent group-hover:text-on-accent">
+                <Play className="ml-0.5 h-4 w-4" aria-hidden />
               </span>
             </motion.button>
           );
@@ -271,19 +294,16 @@ function MyLaps({ me }: { me: UserProfile }) {
 
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] grid place-items-center bg-black/80 p-2 backdrop-blur-md sm:p-4" onClick={() => setOpen(null)}>
-            <motion.div
-              initial={{ scale: 0.94, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.96, opacity: 0 }}
-              // as wide as the screen allows while the 16:9 scene still fits in height
-              style={{ maxWidth: 'min(1440px, calc((100dvh - 8rem) * 16 / 9))' }}
-              className="flex max-h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d12] shadow-[0_30px_80px_rgba(0,0,0,0.6)] sm:max-h-[calc(100dvh-2rem)]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MyLapViewer lap={open} handle={me.handle} onClose={() => setOpen(null)} />
-            </motion.div>
-          </motion.div>
+          <Dialog
+            label="Перегляд кола"
+            onClose={() => setOpen(null)}
+            className="p-2 sm:p-4"
+            // as wide as the screen allows while the 16:9 scene still fits in height
+            panelStyle={{ maxWidth: 'min(1440px, calc((100dvh - 8rem) * 16 / 9))' }}
+            panelClassName="flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-lg border-line bg-surface text-ink sm:max-h-[calc(100dvh-2rem)]"
+          >
+            <MyLapViewer lap={open} handle={me.handle} onClose={() => setOpen(null)} />
+          </Dialog>
         )}
       </AnimatePresence>
     </section>
@@ -303,17 +323,17 @@ function Tasks({ me }: { me: UserProfile }) {
               <motion.li variants={fadeUp} key={t.id} className={cn('rounded-xl border p-4 transition', done ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-line hover:border-ink/20')}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted">{t.period}</div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-muted">{t.period}</div>
                     <div className="mt-0.5 font-bold">{t.title}</div>
                   </div>
-                  <span className={cn('shrink-0 rounded-full px-2 py-0.5 font-mono text-[11px] font-bold', done ? 'bg-emerald-500 text-white' : 'bg-f1-red/10 text-f1-red')}>+{t.xp} XP</span>
+                  <span className={cn('shrink-0 rounded-full px-2 py-0.5 font-mono text-xs font-bold', done ? 'bg-emerald-500 text-on-accent' : 'bg-f1-red/10 text-accent-ink')}>+{t.xp} XP</span>
                 </div>
                 <p className="mt-1 text-xs text-muted">{t.description}</p>
                 <div className="mt-3 flex items-center gap-2">
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
                     <motion.div className={cn('h-full rounded-full', done ? 'bg-emerald-500' : 'bg-f1-red')} initial={{ width: 0 }} animate={{ width: `${Math.min(1, t.progress / t.goal) * 100}%` }} transition={{ duration: 1, delay: 0.3 }} />
                   </div>
-                  <span className="font-mono text-[11px] text-muted">
+                  <span className="font-mono text-xs text-muted">
                     {t.progress}/{t.goal}
                   </span>
                 </div>
@@ -344,9 +364,9 @@ function MyLapViewer({ lap, handle, onClose }: { lap: UserLap; handle: string; o
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-3 border-b border-white/10 bg-gradient-to-r from-f1-red/15 via-transparent to-transparent px-4 py-3 sm:px-5">
-        <div className="mr-auto min-w-0 text-white">
-          <div className="truncate text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">Hot lap · {CIRCUITS[lap.circuitId].name}</div>
+      <div className="flex flex-wrap items-center gap-3 border-b border-line bg-gradient-to-r from-f1-red/15 via-transparent to-transparent px-4 py-3 sm:px-5">
+        <div className="mr-auto min-w-0 text-ink">
+          <div className="truncate text-xs font-bold uppercase tracking-[0.2em] text-muted">Hot lap · {CIRCUITS[lap.circuitId].name}</div>
           <div className="display text-3xl">{formatLapTime(lap.lapTime)}</div>
         </div>
         <Segmented
@@ -358,7 +378,7 @@ function MyLapViewer({ lap, handle, onClose }: { lap: UserLap; handle: string; o
             { value: 'analysis', label: <><Activity className="h-3.5 w-3.5" /> Аналіз</> },
           ]}
         />
-        <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/80 transition hover:bg-f1-red hover:text-white" aria-label="Закрити">
+        <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center rounded-full bg-ink/10 text-ink/80 transition hover:bg-f1-red hover:text-on-accent" aria-label="Закрити">
           <X className="h-4 w-4" />
         </button>
       </div>

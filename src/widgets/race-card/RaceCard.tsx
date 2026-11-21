@@ -17,12 +17,12 @@ export function RaceCard({ event, isNext }: { event: RaceEvent; isNext?: boolean
   const body = (
     <>
       {/* red sweep on hover */}
-      <span className="absolute inset-x-0 bottom-0 h-[3px] origin-left scale-x-0 bg-f1-red transition-transform duration-500 group-hover:scale-x-100" />
+      <span className="absolute inset-x-0 bottom-0 h-[3px] origin-left scale-x-0 bg-f1-red transition-transform duration-300 group-hover:scale-x-100" />
 
       <div className="flex items-start justify-between gap-3">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-muted">{event.testing ? 'Testing' : `Round ${event.round}`}</div>
+        <div className="text-xs font-bold uppercase tracking-wider text-muted">{event.testing ? 'Testing' : `Round ${event.round}`}</div>
         {!event.testing && (
-          <span className="flex items-center gap-1.5 rounded bg-surface-2 px-2 py-1 font-mono text-[11px] font-bold uppercase">
+          <span className="flex items-center gap-1.5 rounded bg-surface-2 px-2 py-1 font-mono text-xs font-bold uppercase">
             <FlagIcon className="h-3 w-3" />
             {formatDateRange(event.startDate, event.endDate)}
           </span>
@@ -33,7 +33,7 @@ export function RaceCard({ event, isNext }: { event: RaceEvent; isNext?: boolean
         <Flag code={event.countryCode} className="h-6 w-6" />
         <h3 className="display truncate text-[28px] not-italic tracking-tight">{event.country}</h3>
         {isNext && (
-          <span className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full bg-f1-red px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+          <span className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full bg-f1-red px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-on-accent">
             <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-white" /> Next
           </span>
         )}
@@ -45,7 +45,7 @@ export function RaceCard({ event, isNext }: { event: RaceEvent; isNext?: boolean
       {!done && !event.testing && (
         <TrackOutline
           circuitId={event.circuitId}
-          className={cn('pointer-events-none absolute bottom-4 right-4 h-20 w-40 transition-all duration-500 group-hover:scale-105', isNext ? 'text-f1-red opacity-80' : 'text-ink opacity-15 group-hover:opacity-40')}
+          className={cn('pointer-events-none absolute bottom-4 right-4 h-20 w-40 transition-all duration-300 group-hover:scale-105', isNext ? 'text-accent-ink opacity-80' : 'text-ink opacity-15 group-hover:opacity-40')}
           strokeWidth={2}
           runner={isNext}
         />
@@ -58,14 +58,14 @@ export function RaceCard({ event, isNext }: { event: RaceEvent; isNext?: boolean
         <div className="mt-auto grid grid-cols-3 gap-1.5 pt-6">
           {podium.map((r) => (
             <div key={r.driverCode} className="flex items-center gap-2 rounded-md bg-surface-2 px-2 py-1.5">
-              <span className="flex flex-col items-center font-mono text-[10px] font-bold leading-none">
+              <span className="flex flex-col items-center font-mono text-xs font-bold leading-none">
                 <span className="text-sm">{r.position}</span>
                 <span className="text-[7px]">{ordinalSuffix(r.position!)}</span>
               </span>
               <DriverBadge code={r.driverCode} size={26} />
               <span className="min-w-0 leading-tight">
                 <span className="block text-sm font-black">{r.driverCode}</span>
-                <span className="block truncate font-mono text-[10px] text-muted">{r.time}</span>
+                <span className="block truncate font-mono text-xs text-muted">{r.time}</span>
               </span>
             </div>
           ))}
@@ -75,8 +75,8 @@ export function RaceCard({ event, isNext }: { event: RaceEvent; isNext?: boolean
   );
 
   const cls = cn(
-    'group relative flex min-h-[230px] flex-col overflow-hidden rounded-xl border border-line bg-surface p-4 transition-all duration-300 dark:bg-black',
-    to && 'hover:-translate-y-1 hover:shadow-[0_20px_40px_-20px_rgba(225,6,0,0.45)]',
+    'group relative flex min-h-[230px] flex-col overflow-hidden rounded-xl border border-line bg-surface p-4 transition-all duration-300',
+    to && 'hover:-translate-y-1 hover:shadow-[0_20px_40px_-20px_color-mix(in_srgb,var(--c-accent)_45%,transparent)]',
     isNext && 'ring-1 ring-f1-red/60',
   );
 

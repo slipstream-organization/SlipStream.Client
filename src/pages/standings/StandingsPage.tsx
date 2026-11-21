@@ -8,7 +8,10 @@ import { api } from '../../shared/api';
 import { useData } from '../../shared/lib/useData';
 import { DRIVERS, DRIVER_BY_CODE, SEASON, TEAMS, TEAM_BY_ID } from '../../shared/mock/season';
 import type { StandingRow, StandingsHistory, TeamId } from '../../shared/model/types';
-import { DriverBadge, Flag, Loader, Segmented } from '../../shared/ui/atoms';
+import { DriverBadge, Flag, Segmented } from '../../shared/ui/atoms';
+import { SkeletonRows } from '../../shared/ui/Skeleton';
+import { StateBlock } from '../../shared/ui/StateBlock';
+import { Button } from '../../shared/ui/Button';
 import { StandingsChart, type ChartSeries } from '../../widgets/standings-chart/StandingsChart';
 import { cn } from '../../shared/lib/utils';
 
@@ -27,7 +30,7 @@ export function StandingsPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 pt-10 md:px-6">
       <div className="mb-8">
-        <div className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-f1-red">{SEASON} Standings</div>
+        <div className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-accent-ink">{SEASON} Standings</div>
         <h1 className="display text-5xl md:text-7xl">Таблиця лідерів</h1>
       </div>
 
@@ -69,10 +72,21 @@ export function StandingsPage() {
       </div>
 
       {!current ? (
-        <Loader />
+        (kind === 'drivers' ? drivers : teams).error ? (
+          <StateBlock
+            kind="error"
+            title="Не вдалося завантажити таблицю"
+            description="Перевірте з'єднання й повторіть спробу."
+            action={<Button onClick={(kind === 'drivers' ? drivers : teams).reload}>Спробувати ще раз</Button>}
+          />
+        ) : (
+          <div className="card p-4 md:p-6">
+            <SkeletonRows rows={10} />
+          </div>
+        )
       ) : (
         <AnimatePresence mode="wait">
-          <motion.div key={`${kind}-${view}`} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
+          <motion.div key={`${kind}-${view}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
             {view === 'table' ? (
               kind === 'drivers' ? <DriversTable rows={current.table} /> : <TeamsTable rows={current.table} />
             ) : (
@@ -89,7 +103,7 @@ function Leader({ row, kind }: { row: StandingRow; kind: Kind }) {
   const color = kind === 'drivers' ? TEAM_BY_ID[DRIVER_BY_CODE[row.id].teamId].color : TEAM_BY_ID[row.id as TeamId].color;
   const name = kind === 'drivers' ? `${DRIVER_BY_CODE[row.id].firstName} ${DRIVER_BY_CODE[row.id].lastName}` : TEAM_BY_ID[row.id as TeamId].fullName;
   return (
-    <div className="relative mb-4 overflow-hidden rounded-[14px] p-6 text-black" style={{ background: `linear-gradient(110deg, ${color}, ${color}aa 60%, ${color}55)` }}>
+    <div className="relative mb-4 overflow-hidden rounded-lg p-6 text-black" style={{ background: `linear-gradient(110deg, ${color}, ${color}aa 60%, ${color}55)` }}>
       <div className="absolute -right-4 -top-8 font-sport text-[180px] font-black italic leading-none text-black/10">1</div>
       <motion.img
         src={kind === 'drivers' ? driverPhoto(row.id, '4col') : teamCar(row.id as TeamId, 320)}
@@ -136,7 +150,7 @@ function DriversTable({ rows }: { rows: StandingRow[] }) {
       {rows[0] && <Leader row={rows[0]} kind="drivers" />}
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted">Натисни на пілота, щоб відкрити його сторінку: статистика, біографія, новини</p>
-        <Link to="/championship" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-f1-red hover:underline">
+        <Link to="/championship" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-accent-ink hover:underline">
           Хто ще може стати чемпіоном <ChevronRight className="h-3.5 w-3.5" />
         </Link>
       </div>
@@ -159,9 +173,9 @@ function DriversTable({ rows }: { rows: StandingRow[] }) {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 font-bold">
                     <span className="hidden sm:inline">{d.firstName}</span>
-                    <span className="uppercase transition-colors group-hover:text-f1-red">{d.lastName}</span>
+                    <span className="uppercase transition-colors group-hover:text-accent-ink">{d.lastName}</span>
                     <Flag code={d.country} className="h-4 w-4 ring-1" />
-                    {d.rookie && <span className="rounded bg-surface-2 px-1.5 text-[10px] font-bold uppercase text-muted">rookie</span>}
+                    {d.rookie && <span className="rounded bg-surface-2 px-1.5 text-xs font-bold uppercase text-muted">rookie</span>}
                   </div>
                   <div className="text-xs text-muted">{team.name}</div>
                 </div>
@@ -170,7 +184,7 @@ function DriversTable({ rows }: { rows: StandingRow[] }) {
                 </div>
                 <PointsBar value={r.points} max={max} color={team.color} delay={i * 0.03} />
                 <span className="w-14 text-right font-mono text-lg font-bold">{r.points}</span>
-                <ChevronRight className="h-4 w-4 text-muted transition group-hover:translate-x-0.5 group-hover:text-f1-red" />
+                <ChevronRight className="h-4 w-4 text-muted transition group-hover:translate-x-0.5 group-hover:text-accent-ink" />
               </Link>
             </motion.div>
           );
@@ -280,7 +294,7 @@ function ChartView({ kind, history, table, mode }: { kind: Kind; history: Standi
             </button>
           );
         })}
-        <button type="button" onClick={() => setSelected([])} className="px-2 text-xs font-bold uppercase text-muted hover:text-f1-red">
+        <button type="button" onClick={() => setSelected([])} className="px-2 text-xs font-bold uppercase text-muted hover:text-accent-ink">
           Очистити
         </button>
       </div>

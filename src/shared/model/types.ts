@@ -69,8 +69,31 @@ export interface RaceWeekendResult {
   poleTime: number;
 }
 
+/** Article body block (mirrors the planned news API: GET /api/news/{slug} → body: Block[]). */
+export type NewsBlock =
+  | { type: 'p'; text: string }
+  | { type: 'h2'; text: string }
+  | { type: 'quote'; text: string; cite?: string }
+  | { type: 'list'; items: string[] }
+  | { type: 'image'; src: string; alt: string; caption?: string; credit?: string; kind?: 'car' | 'driver' | 'photo' };
+
+export interface NewsAuthor {
+  name: string;
+  role: string;
+}
+
+/**
+ * A news story. Field names map to the API contract:
+ * slug, date → publishedAt, readMinutes → readingTime, image → cover, drivers → relatedDriverCodes, teams → relatedTeamIds.
+ */
 export interface NewsItem {
   id: string;
+  /** URL key: /news/:slug */
+  slug: string;
+  author?: NewsAuthor;
+  body?: NewsBlock[];
+  tags?: string[];
+  teams?: TeamId[];
   title: string;
   excerpt: string;
   tag: string;

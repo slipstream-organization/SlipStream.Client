@@ -3,7 +3,7 @@ import { Compass, Mountain } from 'lucide-react';
 import { CIRCUITS } from '../../shared/data/circuits';
 import { ELEVATION_RANGE, elevationProfile, isHilly } from '../../shared/data/elevation';
 import { DRIVER_BY_CODE, TEAM_BY_ID } from '../../shared/mock/season';
-import { useTheme } from '../../app/providers/ThemeProvider';
+import { useThemeVars } from '../../shared/lib/themeVars';
 import { cn } from '../../shared/lib/utils';
 import { findCorners, getProLap, sampleAt, type LapModel } from '../lap-simulator/lapModel';
 import { carIndex, type CarState, type TimingState } from './timingModel';
@@ -14,17 +14,12 @@ const PAD = 56;
 const TILT_3D = 0.9; // radians from top-down
 const YAW_3D = -0.6; // look along the track diagonally, like a 3D map flyover
 
-/** Apple-Maps-like palettes. */
-const PALETTE = {
-  light: {
-    grass: '#d4ebc1', sky: ['#e4edf5', '#f6f8fa'], ground: '#cde6b8', groundEdge: '#b5d39d', wall: '#93ae78', grid: 'rgba(40,80,30,0.08)',
-    runoff: '#ece6d6', edge: '#ffffff', asphalt: '#4b4f57', label: '#ffffff', labelText: '#2a2d33', labelIcon: '#6b6f78', shadow: 'rgba(30,50,20,0.35)',
-  },
-  dark: {
-    grass: '#18241d', sky: ['#07090c', '#11161b'], ground: '#1b2a21', groundEdge: '#2a3d31', wall: '#3b5a45', grid: 'rgba(255,255,255,0.04)',
-    runoff: '#252b28', edge: '#6a7079', asphalt: '#2f333a', label: '#2a2e35', labelText: '#e8e9ec', labelIcon: '#9aa0aa', shadow: 'rgba(0,0,0,0.6)',
-  },
-};
+/** Apple-Maps-like palette — values live in index.css (--map-*), one set per theme. */
+const MAP_VARS = {
+  grass: '--map-grass', sky1: '--map-sky-1', sky2: '--map-sky-2', ground: '--map-ground', groundEdge: '--map-ground-edge',
+  wall: '--map-wall', grid: '--map-grid', runoff: '--map-runoff', edge: '--map-edge', asphalt: '--map-asphalt', label: '--map-label',
+  labelText: '--map-label-text', labelIcon: '--map-label-icon', shadow: '--map-shadow', tooltip: '--map-tooltip', tooltipText: '--map-tooltip-text',
+} as const;
 
 interface Geo {
   lap: LapModel;
@@ -153,8 +148,8 @@ interface Props {
 }
 
 export function TrackMap({ circuitId, lapTime, timing, selected, hovered, onSelect, onHover }: Props) {
-  const { theme } = useTheme();
-  const pal = PALETTE[theme];
+
+  const pal = useThemeVars(MAP_VARS);
   const geo = useMemo(() => buildGeo(circuitId, lapTime), [circuitId, lapTime]);
   const hilly = isHilly(circuitId);
   const [mode, setMode] = useState<'2d' | '3d'>(hilly ? '3d' : '2d');
@@ -311,8 +306,8 @@ export function TrackMap({ circuitId, lapTime, timing, selected, hovered, onSele
       >
         <defs>
           <linearGradient id="map-sky" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stopColor={pal.sky[0]} />
-            <stop offset="1" stopColor={pal.sky[1]} />
+            <stop offset="0" stopColor={pal.sky1} />
+            <stop offset="1" stopColor={pal.sky2} />
           </linearGradient>
           <filter id="map-blur" x="-10%" y="-10%" width="120%" height="120%">
             <feGaussianBlur stdDeviation="6" />
@@ -377,9 +372,9 @@ export function TrackMap({ circuitId, lapTime, timing, selected, hovered, onSele
               </text>
               {showTag(car) && (
                 <g transform="translate(0 -24)">
-                  <rect x={-22} y={-10} width={44} height={18} rx={4} fill="#15151e" opacity={0.92} />
+                  <rect x={-22} y={-10} width={44} height={18} rx={4} fill={pal.tooltip} opacity={0.92} />
                   <rect x={-22} y={-10} width={4} height={18} rx={1.5} fill={color} />
-                  <text x={2} y={3.5} textAnchor="middle" fontSize={10.5} fontWeight={800} fill="#fff" fontFamily="var(--font-mono)">
+                  <text x={2} y={3.5} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={pal.tooltipText} fontFamily="var(--font-mono)">
                     {car.inPit ? 'PIT' : car.code}
                   </text>
                 </g>
@@ -394,7 +389,7 @@ export function TrackMap({ circuitId, lapTime, timing, selected, hovered, onSele
         <button
           type="button"
           onClick={() => setView(mode === '3d' ? '2d' : '3d')}
-          className="grid h-10 w-10 place-items-center rounded-full bg-white/90 font-sport text-sm font-black text-[#15151e] shadow-md backdrop-blur transition hover:scale-105 dark:bg-[#2a2e35]/90 dark:text-white"
+          className="grid h-10 w-10 place-items-center press rounded-full border border-line bg-surface/90 font-sport text-sm font-black text-ink shadow-float"
           aria-label={mode === '3d' ? 'Плоска карта' : '3D-вигляд'}
         >
           {mode === '3d' ? '2D' : '3D'}
@@ -402,17 +397,17 @@ export function TrackMap({ circuitId, lapTime, timing, selected, hovered, onSele
         <button
           type="button"
           onClick={() => setYawTarget(0)}
-          className="grid h-10 w-10 place-items-center rounded-full bg-white/90 text-[#15151e] shadow-md backdrop-blur transition hover:scale-105 dark:bg-[#2a2e35]/90 dark:text-white"
+          className="grid h-10 w-10 place-items-center press rounded-full border border-line bg-surface/90 text-ink shadow-float"
           aria-label="Скинути поворот"
         >
-          <Compass className="h-5 w-5 text-f1-red" style={{ transform: `rotate(${(yaw * 180) / Math.PI - 45}deg)` }} />
+          <Compass className="h-5 w-5 text-accent-ink" style={{ transform: `rotate(${(yaw * 180) / Math.PI - 45}deg)` }} />
         </button>
       </div>
-      <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[11px] font-bold text-[#2a2d33] shadow-sm backdrop-blur dark:bg-[#2a2e35]/85 dark:text-white/90">
+      <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-line bg-surface/90 px-3 py-1.5 text-xs font-bold text-ink shadow-soft">
         <Mountain className="h-3.5 w-3.5" />
         Перепад висот {ELEVATION_RANGE[circuitId] ?? '—'} м
       </div>
-      <div className={cn('pointer-events-none absolute bottom-3 right-3 rounded-full bg-black/40 px-2.5 py-1 text-[10px] text-white/80 transition-opacity', dragging ? 'opacity-0' : 'opacity-100')}>
+      <div className={cn('pointer-events-none absolute bottom-3 right-3 rounded-full bg-surface/85 px-2.5 py-1 text-xs text-ink/80 transition-opacity', dragging ? 'opacity-0' : 'opacity-100')}>
         {mode === '3d' ? 'Тягни, щоб обертати й нахиляти' : 'Тягни, щоб обертати'}
       </div>
     </div>

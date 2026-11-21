@@ -10,11 +10,11 @@ import { BestYearCard, PanelShell, Stat } from './parts';
 import { panelSection } from '../../shared/ui/motion';
 
 function FormChip({ position, label }: { position: number | null; label: string }) {
-  const tone = position === null ? 'bg-f1-red text-white' : position === 1 ? 'bg-amber-400 text-black' : position <= 3 ? 'bg-ink text-bg' : position <= 10 ? 'bg-surface text-ink' : 'bg-surface text-muted';
+  const tone = position === null ? 'bg-f1-red text-on-accent' : position === 1 ? 'bg-amber-400 text-black' : position <= 3 ? 'bg-ink text-bg' : position <= 10 ? 'bg-surface text-ink' : 'bg-surface text-muted';
   return (
     <div className="flex flex-col items-center gap-1">
       <span className={cn('grid h-9 w-9 place-items-center rounded-md font-mono text-xs font-bold', tone)}>{position === null ? 'DNF' : `P${position}`}</span>
-      <span className="font-mono text-[9px] text-muted">{label}</span>
+      <span className="font-mono text-xs text-muted">{label}</span>
     </div>
   );
 }
@@ -48,7 +48,7 @@ function DriverPortrait({ code }: { code: string }) {
           {d.firstName}
         </div>
         <div className="display text-2xl">{d.lastName}</div>
-        <div className="text-[11px] text-white/70">{team.name}</div>
+        <div className="text-xs text-white/70">{team.name}</div>
       </div>
     </motion.div>
   );
@@ -66,7 +66,7 @@ export function DriverStatsPanel({ code, standalone }: { code: string; standalon
       <motion.section variants={panelSection}>
         <div className="mb-3 flex items-center justify-between">
           <h4 className="display text-lg">Сезон {SEASON}</h4>
-          <span className="rounded-full bg-f1-red px-2.5 py-0.5 font-mono text-xs font-bold text-white">P{season.position} в чемпіонаті</span>
+          <span className="rounded-full bg-f1-red px-2.5 py-0.5 font-mono text-xs font-bold text-on-accent">P{season.position} в чемпіонаті</span>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <Stat icon={<FlagIcon className="h-3 w-3" />} label="Стартів" value={season.starts} />
@@ -78,7 +78,7 @@ export function DriverStatsPanel({ code, standalone }: { code: string; standalon
         </div>
         {season.form.length > 0 && (
           <div className="mt-4">
-            <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted">
+            <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">
               Форма · останні {season.form.length} · найкращий фініш {season.bestFinish ? `P${season.bestFinish}` : '—'}
             </div>
             <div className="flex gap-2">

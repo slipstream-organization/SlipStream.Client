@@ -24,32 +24,32 @@ const COLS = 'grid-cols-[22px_20px_1fr_74px_62px_38px_16px]';
 export function TimingTower({ timing, laps, gapMode, onGapMode, selected, hovered, onSelect, onHover }: Props) {
   const fl = timing.fastest;
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl bg-[#101016] text-white ring-1 ring-white/10">
-      <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-f1-red/25 to-transparent px-3 py-2.5">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl bg-surface text-ink ring-1 ring-line">
+      <div className="flex items-center justify-between border-b border-line bg-gradient-to-r from-f1-red/25 to-transparent px-3 py-2.5">
         <div className="flex items-baseline gap-1.5 font-mono">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">Коло</span>
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Коло</span>
           <span className="text-xl font-black">{timing.leaderLap}</span>
-          <span className="text-sm text-white/40">/{laps}</span>
+          <span className="text-sm text-muted">/{laps}</span>
         </div>
         {timing.finished ? (
-          <span className="flex items-center gap-1.5 rounded bg-white px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-black">
+          <span className="flex items-center gap-1.5 rounded bg-ink px-2 py-0.5 text-xs font-black uppercase tracking-wider text-bg">
             <Flag className="h-3 w-3" /> Фініш
           </span>
         ) : (
-          <span className="flex items-center gap-1.5 rounded bg-emerald-500 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-black">
+          <span className="flex items-center gap-1.5 rounded bg-emerald-500 px-2 py-0.5 text-xs font-black uppercase tracking-wider text-black">
             <span className="h-1.5 w-1.5 rounded-full bg-black/70" /> Зелений прапор
           </span>
         )}
       </div>
 
-      <div className={cn('grid items-center gap-1.5 border-b border-white/10 px-2 py-1.5 text-[9px] font-bold uppercase tracking-wider text-white/40', COLS)}>
+      <div className={cn('grid items-center gap-1.5 border-b border-line px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-muted', COLS)}>
         <span className="text-center">П</span>
         <span />
         <span>Пілот</span>
         <button
           type="button"
           onClick={() => onGapMode(gapMode === 'interval' ? 'leader' : 'interval')}
-          className="rounded bg-white/10 px-1 py-0.5 text-right text-white/80 transition hover:bg-f1-red hover:text-white"
+          className="rounded bg-ink/10 px-1 py-0.5 text-right text-ink/80 transition hover:bg-f1-red hover:text-on-accent"
           title="Перемкнути: інтервал / до лідера"
         >
           {gapMode === 'interval' ? 'Інтервал ⇄' : 'Лідер ⇄'}
@@ -82,7 +82,7 @@ export function TimingTower({ timing, laps, gapMode, onGapMode, selected, hovere
           <span className="font-bold uppercase tracking-wider">Найшвидше коло</span>
           <span className="ml-auto font-black">{fl.code}</span>
           <span className="font-mono">{formatLapTime(fl.time)}</span>
-          <span className="font-mono text-white/60">L{fl.lap}</span>
+          <span className="font-mono text-white/85">L{fl.lap}</span>
         </div>
       )}
     </div>
@@ -115,35 +115,35 @@ function Row({
   return (
     <motion.li
       layout
-      transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       onClick={() => onSelect(active ? null : car.code)}
       onMouseEnter={() => onHover(car.code)}
       onMouseLeave={() => onHover(null)}
       className={cn(
-        'grid cursor-pointer items-center gap-1.5 border-b border-white/[0.06] px-2 py-[5px] text-[13px] transition-colors last:border-0',
+        'grid cursor-pointer items-center gap-1.5 border-b border-line px-2 py-[5px] text-[13px] transition-colors last:border-0',
         COLS,
-        active ? 'bg-white text-black' : hover ? 'bg-white/10' : car.position % 2 ? 'bg-transparent' : 'bg-white/[0.025]',
+        active ? 'bg-ink text-bg' : hover ? 'bg-ink/10' : car.position % 2 ? 'bg-transparent' : 'bg-ink/[0.025]',
       )}
     >
-      <span className={cn('grid h-5 place-items-center rounded-sm font-mono text-[11px] font-black', active ? 'bg-black text-white' : 'bg-white text-black')}>{car.position}</span>
-      <span className={cn('text-center font-mono text-[9px] font-bold', gained > 0 ? 'text-emerald-400' : gained < 0 ? 'text-f1-red' : active ? 'text-black/30' : 'text-white/25')}>
+      <span className={cn('grid h-5 place-items-center rounded-sm font-mono text-xs font-black', active ? 'bg-bg text-ink' : 'bg-ink text-bg')}>{car.position}</span>
+      <span className={cn('text-center font-mono text-xs font-bold', active ? 'text-bg/70' : gained > 0 ? 'text-positive' : gained < 0 ? 'text-accent-ink' : 'text-muted')}>
         {gained > 0 ? `▲${gained}` : gained < 0 ? `▼${-gained}` : '–'}
       </span>
       <span className="flex min-w-0 items-center gap-1.5">
         <span className="h-4 w-[3px] shrink-0 rounded-full" style={{ background: team.color }} />
         <span className="font-black tracking-wide">{car.code}</span>
-        {fastestLapHolder && <Timer className="h-3.5 w-3.5 shrink-0 text-purple-400" />}
-        {car.inPit && <span className="rounded bg-sky-500 px-1 text-[9px] font-black text-black">PIT</span>}
-        {car.drs && <span className="rounded bg-emerald-500 px-1 text-[9px] font-black text-black">DRS</span>}
+        {fastestLapHolder && <Timer className="h-3.5 w-3.5 shrink-0 text-fastest" />}
+        {car.inPit && <span className="rounded bg-sky-500 px-1 text-xs font-black text-black">PIT</span>}
+        {car.drs && <span className="rounded bg-emerald-500 px-1 text-xs font-black text-black">DRS</span>}
         {car.finished && <Flag className="h-3 w-3 shrink-0 opacity-70" />}
       </span>
-      <span className={cn('text-right font-mono text-[12px] tabular-nums', car.position === 1 && 'text-[10px] font-bold uppercase tracking-wider', active ? 'text-black' : 'text-white/90')}>
+      <span className={cn('text-right font-mono text-[12px] tabular-nums', car.position === 1 && 'text-xs font-bold uppercase tracking-wider', active ? 'text-bg' : 'text-ink/80')}>
         {car.position === 1 ? (gapMode === 'interval' ? 'Інтервал' : 'Лідер') : gap}
       </span>
       <span
         className={cn(
-          'text-right font-mono text-[11px] tabular-nums',
-          fastestLapHolder && lastIsPb ?'font-bold text-purple-400' : lastIsPb ? 'text-emerald-400' : active ? 'text-black/60' : 'text-white/55',
+          'text-right font-mono text-xs tabular-nums',
+          fastestLapHolder && lastIsPb ?'font-bold text-fastest' : lastIsPb ? 'text-positive' : active ? 'text-bg/70' : 'text-muted',
         )}
       >
         {car.lastLap ? formatLapTime(car.lastLap) : '—'}
@@ -152,9 +152,9 @@ function Row({
         <span className="grid h-[18px] w-[18px] place-items-center rounded-full border-2 bg-[#111] font-mono text-[8px] font-black text-white" style={{ borderColor: comp.color }}>
           {car.compound}
         </span>
-        <span className={cn('font-mono text-[10px]', active ? 'text-black/50' : 'text-white/45')}>{car.tyreAge}</span>
+        <span className={cn('font-mono text-xs', active ? 'text-bg/70' : 'text-muted')}>{car.tyreAge}</span>
       </span>
-      <span className={cn('text-center font-mono text-[11px]', active ? 'text-black/60' : 'text-white/50')}>{car.pitStops}</span>
+      <span className={cn('text-center font-mono text-xs', active ? 'text-bg/70' : 'text-muted')}>{car.pitStops}</span>
     </motion.li>
   );
 }

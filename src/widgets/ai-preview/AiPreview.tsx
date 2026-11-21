@@ -17,7 +17,7 @@ export function GeneratedBadge({ note }: { note: string }) {
         type="button"
         onClick={() => setOpen((o) => !o)}
         onBlur={() => setOpen(false)}
-        className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/50 bg-violet-500/10 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-violet-500 dark:text-violet-300"
+        className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/50 bg-violet-500/10 px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.18em] text-violet-500 dark:text-violet-300"
       >
         <Sparkles className="h-3 w-3" /> Generated <Info className="h-3 w-3 opacity-70" />
       </button>
@@ -42,8 +42,8 @@ function PickCard({ icon, title, odds, value, delay }: { icon: React.ReactNode; 
       className="relative overflow-hidden rounded-xl border border-line bg-surface p-4"
     >
       <span className="absolute inset-x-0 top-0 h-1" style={{ background: team.color }} />
-      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
-        <span className="text-f1-red">{icon}</span>
+      <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
+        <span className="text-accent-ink">{icon}</span>
         {title}
       </div>
       <Link to={`/drivers/${odds.code}`} className="mt-3 flex items-center gap-3">
@@ -54,7 +54,7 @@ function PickCard({ icon, title, odds, value, delay }: { icon: React.ReactNode; 
         </div>
         <div className="ml-auto text-right">
           <div className="display text-3xl">{pct(value)}</div>
-          <div className="text-[10px] uppercase tracking-wider text-muted">ймовірність</div>
+          <div className="text-xs uppercase tracking-wider text-muted">ймовірність</div>
         </div>
       </Link>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2">
@@ -100,7 +100,7 @@ export function AiPreview({ round, laps }: { round: number; laps: number }) {
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
             <thead>
-              <tr className="border-b border-line text-left text-[11px] uppercase tracking-wider text-muted">
+              <tr className="border-b border-line text-left text-xs uppercase tracking-wider text-muted">
                 <th className="px-4 py-3">Пілот</th>
                 <th className="px-2 py-3">Перемога</th>
                 <th className="px-2 py-3">Подіум</th>
@@ -115,7 +115,7 @@ export function AiPreview({ round, laps }: { round: number; laps: number }) {
                 return (
                   <motion.tr key={o.code} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.03 }} className="border-b border-line/60 last:border-0 hover:bg-surface-2">
                     <td className="px-4 py-2">
-                      <Link to={`/drivers/${o.code}`} className="flex items-center gap-2 font-bold hover:text-f1-red">
+                      <Link to={`/drivers/${o.code}`} className="flex items-center gap-2 font-bold hover:text-accent-ink">
                         <span className="w-4 font-mono text-xs text-muted">{i + 1}</span>
                         <DriverBadge code={o.code} size={24} />
                         {o.code}
@@ -151,10 +151,10 @@ export function AiPreview({ round, laps }: { round: number; laps: number }) {
           {/* strategy */}
           <div className="card p-4">
             <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
-                <Gauge className="h-3.5 w-3.5 text-f1-red" /> Ймовірна стратегія · {laps} кіл
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
+                <Gauge className="h-3.5 w-3.5 text-accent-ink" /> Ймовірна стратегія · {laps} кіл
               </div>
-              <span className="flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-300">
+              <span className="flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-xs font-bold text-amber-600 dark:text-amber-300">
                 <Siren className="h-3 w-3" /> SC {pct(p.safetyCar)}
               </span>
             </div>
@@ -172,7 +172,7 @@ export function AiPreview({ round, laps }: { round: number; laps: number }) {
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: 1 }}
                         transition={{ duration: 0.5, delay: i * 0.1 + k * 0.12 }}
-                        className="flex origin-left items-center justify-center font-mono text-[10px] font-bold"
+                        className="flex origin-left items-center justify-center font-mono text-xs font-bold"
                         style={{ width: `${(st.laps / laps) * 100}%`, background: COMPOUND[st.compound].color, color: COMPOUND[st.compound].text }}
                         title={`${COMPOUND[st.compound].label}: ${st.laps} кіл`}
                       >

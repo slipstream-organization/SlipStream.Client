@@ -66,7 +66,7 @@ export function LiveTiming({ ev, demo }: { ev: RaceEvent; demo?: boolean }) {
     <section>
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <h2 className="display text-3xl">Live Timing</h2>
-        <span className="flex items-center gap-1.5 rounded-full bg-f1-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-white">
+        <span className="flex items-center gap-1.5 rounded-full bg-f1-red px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.18em] text-on-accent">
           <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-white" /> {demo ? 'Демо' : 'Live'}
         </span>
         <GeneratedBadge note="Позиції, відриви, шини й піт-стопи — з симуляції гонки. Під час реальної гонки сюди підуть дані live-таймінгу; перепад висот траси поки приблизний." />
@@ -101,7 +101,7 @@ export function LiveTiming({ ev, demo }: { ev: RaceEvent; demo?: boolean }) {
             />
             {/* race clock scrubber */}
             <div className="flex items-center gap-3 px-2 pb-1.5 pt-2">
-              <span className="w-16 font-mono text-[11px] text-muted">{clock(Math.min(t, winnerT))}</span>
+              <span className="w-16 font-mono text-xs text-muted">{clock(Math.min(t, winnerT))}</span>
               <input
                 type="range"
                 min={0}
@@ -112,7 +112,7 @@ export function LiveTiming({ ev, demo }: { ev: RaceEvent; demo?: boolean }) {
                 className="h-1 flex-1 cursor-pointer accent-f1-red"
                 aria-label="Час гонки"
               />
-              <span className="w-16 text-right font-mono text-[11px] text-muted">{clock(winnerT)}</span>
+              <span className="w-16 text-right font-mono text-xs text-muted">{clock(winnerT)}</span>
             </div>
           </div>
 
@@ -122,14 +122,14 @@ export function LiveTiming({ ev, demo }: { ev: RaceEvent; demo?: boolean }) {
             </div>
             <FastestLapCard timing={towerTiming} />
             <div className="card flex flex-col justify-between gap-2 p-4">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted">Погода · траса</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-muted">Погода · траса</div>
               <div className="grid gap-1 text-sm">
                 <Metric icon={<Thermometer className="h-3.5 w-3.5" />} label="Повітря" value={`${weather.air}°`} />
                 <Metric icon={<Gauge className="h-3.5 w-3.5" />} label="Траса" value={`${weather.track}°`} />
                 <Metric icon={<Droplets className="h-3.5 w-3.5" />} label="Волог." value={`${weather.humidity}%`} />
                 <Metric icon={<Wind className="h-3.5 w-3.5" />} label="Вітер" value={`${weather.wind} м/с`} />
               </div>
-              <div className="flex items-center justify-between border-t border-line pt-2 text-[11px] text-muted">
+              <div className="flex items-center justify-between border-t border-line pt-2 text-xs text-muted">
                 <span className="flex items-center gap-1"><CloudRain className="h-3.5 w-3.5" /> дощ {weather.rainChance}%</span>
                 <span>піт-стопів: <b className="text-ink">{stops}</b></span>
               </div>
@@ -165,7 +165,7 @@ function Metric({ icon, label, value }: { icon: ReactNode; label: string; value:
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-muted">{icon}</span>
-      <span className="text-[11px] text-muted">{label}</span>
+      <span className="text-xs text-muted">{label}</span>
       <span className="ml-auto font-mono font-bold">{value}</span>
     </div>
   );
@@ -174,7 +174,7 @@ function Metric({ icon, label, value }: { icon: ReactNode; label: string; value:
 function FocusHint() {
   return (
     <div className="card flex h-full items-center gap-3 p-4 text-sm text-muted">
-      <MousePointerClick className="h-5 w-5 shrink-0 text-f1-red" />
+      <MousePointerClick className="h-5 w-5 shrink-0 text-accent-ink" />
       Натисни на болід на карті або на рядок у таблиці, щоб бачити швидкість, передачу й шини пілота.
     </div>
   );
@@ -190,24 +190,24 @@ function DriverFocus({ car, tele }: { car: CarState; tele: ReturnType<typeof tel
       <div className="relative flex items-center gap-3">
         <DriverBadge code={car.code} size={48} />
         <div className="min-w-0 flex-1">
-          <Link to={`/drivers/${car.code}`} className="block truncate font-bold hover:text-f1-red">
+          <Link to={`/drivers/${car.code}`} className="block truncate font-bold hover:text-accent-ink">
             {d.firstName} <span className="uppercase">{d.lastName}</span>
           </Link>
           <div className="text-xs text-muted">{team.name}</div>
         </div>
         <div className="text-right">
           <div className="display text-3xl">P{car.position}</div>
-          <div className="font-mono text-[11px] text-muted">{car.position === 1 ? 'лідер' : car.gap}</div>
+          <div className="font-mono text-xs text-muted">{car.position === 1 ? 'лідер' : car.gap}</div>
         </div>
       </div>
       <div className="relative mt-4 grid grid-cols-[auto_auto_1fr] items-center gap-x-5 gap-y-2">
         <div>
           <div className="font-mono text-3xl font-black tabular-nums leading-none">{tele.speed}</div>
-          <div className="text-[10px] uppercase tracking-wider text-muted">км/год</div>
+          <div className="text-xs uppercase tracking-wider text-muted">км/год</div>
         </div>
         <div>
           <div className="font-mono text-3xl font-black leading-none">{tele.gear || 'N'}</div>
-          <div className="text-[10px] uppercase tracking-wider text-muted">передача</div>
+          <div className="text-xs uppercase tracking-wider text-muted">передача</div>
         </div>
         <div className="grid gap-1.5">
           <Bar label="Газ" value={tele.throttle} color="bg-emerald-500" />
@@ -216,7 +216,7 @@ function DriverFocus({ car, tele }: { car: CarState; tele: ReturnType<typeof tel
       </div>
       <div className="relative mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-3 text-xs">
         <span className="flex items-center gap-1.5">
-          <span className="grid h-5 w-5 place-items-center rounded-full border-2 font-mono text-[9px] font-black" style={{ borderColor: comp.color }}>
+          <span className="grid h-5 w-5 place-items-center rounded-full border-2 font-mono text-xs font-black" style={{ borderColor: comp.color }}>
             {car.compound}
           </span>
           {comp.label} · {car.tyreAge} кіл
@@ -224,7 +224,7 @@ function DriverFocus({ car, tele }: { car: CarState; tele: ReturnType<typeof tel
         <span className="text-muted">Коло <b className="text-ink">{car.lap}</b></span>
         <span className="text-muted">Ост. <b className="font-mono text-ink">{car.lastLap ? formatLapTime(car.lastLap) : '—'}</b></span>
         <span className="text-muted">Найкр. <b className="font-mono text-ink">{car.bestLap ? formatLapTime(car.bestLap) : '—'}</b></span>
-        {car.drs && <span className="rounded bg-emerald-500 px-1.5 text-[10px] font-black text-black">DRS</span>}
+        {car.drs && <span className="rounded bg-emerald-500 px-1.5 text-xs font-black text-black">DRS</span>}
       </div>
     </div>
   );
@@ -233,7 +233,7 @@ function DriverFocus({ car, tele }: { car: CarState; tele: ReturnType<typeof tel
 function Bar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-12 text-[10px] uppercase tracking-wider text-muted">{label}</span>
+      <span className="w-12 text-xs uppercase tracking-wider text-muted">{label}</span>
       <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
         <span className={cn('block h-full rounded-full transition-[width] duration-150', color)} style={{ width: `${value}%` }} />
       </span>
@@ -245,8 +245,8 @@ function FastestLapCard({ timing }: { timing: ReturnType<typeof timingAt> }) {
   const fl = timing.fastest;
   const d = fl ? DRIVER_BY_CODE[fl.code] : undefined;
   return (
-    <div className="relative flex flex-col justify-between overflow-hidden rounded-[14px] bg-gradient-to-br from-purple-600 to-violet-800 p-4 text-white">
-      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white/70">
+    <div className="relative flex flex-col justify-between overflow-hidden rounded-lg bg-gradient-to-br from-purple-600 to-violet-800 p-4 text-white">
+      <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white/90">
         <Timer className="h-3.5 w-3.5" /> Найшвидше коло
       </div>
       {fl && d ? (
@@ -255,13 +255,13 @@ function FastestLapCard({ timing }: { timing: ReturnType<typeof timingAt> }) {
             <DriverBadge code={fl.code} size={32} />
             <div className="leading-tight">
               <div className="font-black uppercase">{d.lastName}</div>
-              <div className="text-[11px] text-white/60">коло {fl.lap}</div>
+              <div className="text-xs text-white/85">коло {fl.lap}</div>
             </div>
           </div>
           <div className="mt-2 font-mono text-2xl font-black tabular-nums">{formatLapTime(fl.time)}</div>
         </>
       ) : (
-        <div className="mt-2 text-sm text-white/70">Ще ніхто не завершив коло</div>
+        <div className="mt-2 text-sm text-white/90">Ще ніхто не завершив коло</div>
       )}
     </div>
   );

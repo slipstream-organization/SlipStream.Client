@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { api, getNextRace, isCompleted } from '../../shared/api';
 import { useData } from '../../shared/lib/useData';
-import { Loader, Segmented } from '../../shared/ui/atoms';
+import { Segmented } from '../../shared/ui/atoms';
+import { SkeletonCards } from '../../shared/ui/Skeleton';
+import { StateBlock } from '../../shared/ui/StateBlock';
+import { Button } from '../../shared/ui/Button';
 import { stagger } from '../../shared/ui/motion';
 import { RaceCard } from '../../widgets/race-card/RaceCard';
 import { SEASON } from '../../shared/mock/season';
@@ -10,7 +13,7 @@ import { SEASON } from '../../shared/mock/season';
 type Filter = 'all' | 'done' | 'upcoming';
 
 export function SchedulePage() {
-  const { data } = useData(api.calendar);
+  const { data, error, reload } = useData(api.calendar);
   const [filter, setFilter] = useState<Filter>('all');
   const next = getNextRace();
 
@@ -26,7 +29,7 @@ export function SchedulePage() {
     <div className="mx-auto max-w-7xl px-4 pt-10 md:px-6">
       <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
         <div>
-          <div className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-f1-red">F1 Schedule</div>
+          <div className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-accent-ink">F1 Schedule</div>
           <h1 className="display text-5xl md:text-7xl">Сезон {SEASON}</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-1.5 w-48 overflow-hidden rounded-full bg-surface-2">
@@ -50,7 +53,7 @@ export function SchedulePage() {
       </div>
 
       {!data ? (
-        <Loader />
+        error ? <StateBlock kind="error" title="Не вдалося завантажити календар" description="Перевірте з'єднання й повторіть спробу." action={<Button onClick={reload}>Спробувати ще раз</Button>} /> : <SkeletonCards count={6} cardClassName="h-44" />
       ) : (
         <motion.div key={filter} variants={stagger(0.04)} initial="hidden" animate="show" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <AnimatePresence mode="popLayout">

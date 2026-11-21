@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Tooltip, type ChartOptions } from 'chart.js';
 import type { StandingsHistory } from '../../shared/model/types';
-import { useTheme } from '../../app/providers/ThemeProvider';
+import { useThemeVars } from '../../shared/lib/themeVars';
+
+const CHART_VARS = { ink: '--c-ink', muted: '--c-muted', grid: '--c-line', surface: '--c-surface', tooltip: '--c-surface-2' } as const;
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
@@ -21,12 +23,7 @@ interface Props {
 }
 
 export function StandingsChart({ history, series, mode, maxPosition }: Props) {
-  const { theme } = useTheme();
-  const dark = theme === 'dark';
-  const ink = dark ? '#ffffff' : '#15151e';
-  const muted = dark ? '#9b9ba8' : '#6b6b76';
-  const grid = dark ? 'rgba(255,255,255,0.06)' : 'rgba(21,21,30,0.08)';
-  const surface = dark ? '#15151e' : '#ffffff';
+  const { ink, muted, grid, surface, tooltip } = useThemeVars(CHART_VARS);
 
   const data = useMemo(
     () => ({
@@ -57,16 +54,16 @@ export function StandingsChart({ history, series, mode, maxPosition }: Props) {
     plugins: {
       legend: {
         position: 'bottom',
-        labels: { color: ink, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 16, font: { family: 'Titillium Web', weight: 'bold', size: 12 } },
+        labels: { color: ink, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 16, font: { family: 'Inter', weight: 'bold', size: 12 } },
       },
       tooltip: {
-        backgroundColor: dark ? '#1f1f2a' : '#ffffff',
+        backgroundColor: tooltip,
         titleColor: ink,
         bodyColor: ink,
         borderColor: grid,
         borderWidth: 1,
         padding: 10,
-        titleFont: { family: 'Titillium Web', weight: 'bold' },
+        titleFont: { family: 'Inter', weight: 'bold' },
         bodyFont: { family: 'JetBrains Mono' },
         itemSort: (a, b) => (mode === 'points' ? (b.parsed.y ?? 0) - (a.parsed.y ?? 0) : (a.parsed.y ?? 0) - (b.parsed.y ?? 0)),
         callbacks: {

@@ -89,7 +89,7 @@ export function LivePredictor({ round, demo }: Props) {
     <section>
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <h2 className="display text-3xl">Live-прогноз</h2>
-        <span className="flex items-center gap-1.5 rounded-full bg-f1-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-white">
+        <span className="flex items-center gap-1.5 rounded-full bg-f1-red px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.18em] text-on-accent">
           <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-white" /> {demo ? 'Демо' : 'Live'}
         </span>
         <GeneratedBadge note="Прогноз оновлюється щокола: очікуваний темп кожного пілота, знос шин і піт-стопи, які ще попереду. У демо-режимі гонка симульована — під час реальної гонки дані йтимуть з live-таймінгу." />
@@ -113,7 +113,7 @@ export function LivePredictor({ round, demo }: Props) {
       <div className="grid gap-4 xl:grid-cols-[360px_1fr]">
         {/* live order */}
         <div className="card overflow-hidden">
-          <div className="grid grid-cols-[28px_1fr_64px_44px_44px] gap-2 border-b border-line px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted">
+          <div className="grid grid-cols-[28px_1fr_64px_44px_44px] gap-2 border-b border-line px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted">
             <span>Поз</span>
             <span>Пілот</span>
             <span className="text-right">Відрив</span>
@@ -133,26 +133,26 @@ export function LivePredictor({ round, demo }: Props) {
                   <motion.li
                     key={c}
                     layout
-                    transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                     onMouseEnter={() => setHover(c)}
                     onMouseLeave={() => setHover(null)}
                     className={cn('grid grid-cols-[28px_1fr_64px_44px_44px] items-center gap-2 border-b border-line/50 px-3 py-1.5 text-sm last:border-0', hover === c && 'bg-surface-2')}
                   >
                     <span className="font-mono font-bold">{p}</span>
-                    <Link to={`/drivers/${c}`} className="flex min-w-0 items-center gap-2 font-bold hover:text-f1-red">
+                    <Link to={`/drivers/${c}`} className="flex min-w-0 items-center gap-2 font-bold hover:text-accent-ink">
                       <span className="h-5 w-1 rounded-full" style={{ background: TEAM_BY_ID[d.teamId].color }} />
                       <DriverBadge code={c} size={22} />
                       {c}
-                      {race.pits[c].includes(lap) && <span className="rounded bg-ink px-1 text-[9px] text-bg">PIT</span>}
+                      {race.pits[c].includes(lap) && <span className="rounded bg-ink px-1 text-xs text-bg">PIT</span>}
                     </Link>
                     <span className="text-right font-mono text-xs">{p === 1 ? 'Лідер' : `+${(race.cum[c][lap] - leaderT).toFixed(1)}`}</span>
                     <span className="flex items-center justify-center gap-1">
-                      <span className="grid h-5 w-5 place-items-center rounded-full font-mono text-[9px] font-bold ring-1 ring-black/10" style={{ background: COMPOUND[comp].color, color: COMPOUND[comp].text }}>
+                      <span className="grid h-5 w-5 place-items-center rounded-full font-mono text-xs font-bold ring-1 ring-black/10" style={{ background: COMPOUND[comp].color, color: COMPOUND[comp].text }}>
                         {comp}
                       </span>
-                      <span className="font-mono text-[10px] text-muted">{race.tyreAge[c][lap]}</span>
+                      <span className="font-mono text-xs text-muted">{race.tyreAge[c][lap]}</span>
                     </span>
-                    <span className={cn('flex items-center justify-end gap-0.5 font-mono text-xs font-bold', delta > 0 ? 'text-emerald-500' : delta < 0 ? 'text-f1-red' : 'text-muted')}>
+                    <span className={cn('flex items-center justify-end gap-0.5 font-mono text-xs font-bold', delta > 0 ? 'text-positive' : delta < 0 ? 'text-accent-ink' : 'text-muted')}>
                       {delta > 0 ? <ArrowUp className="h-3 w-3" /> : delta < 0 ? <ArrowDown className="h-3 w-3" /> : null}
                       {delta === 0 ? '—' : Math.abs(delta)}
                     </span>
@@ -171,7 +171,7 @@ export function LivePredictor({ round, demo }: Props) {
             <div className="grid gap-2">
               {finished ? (
                 <div className="card flex items-center gap-3 p-4">
-                  <Flag className="h-5 w-5 text-f1-red" /> Фініш! Переможець — <b>{order[0]}</b>.
+                  <Flag className="h-5 w-5 text-accent-ink" /> Фініш! Переможець — <b>{order[0]}</b>.
                 </div>
               ) : (
                 insights.map((x) => {
@@ -181,12 +181,12 @@ export function LivePredictor({ round, demo }: Props) {
                       <DriverBadge code={x.c} size={36} />
                       <div className="min-w-0 flex-1 text-sm">
                         <div className="font-bold">
-                          {d.lastName}: P{x.now} → <span className={x.delta > 0 ? 'text-emerald-500' : 'text-f1-red'}>P{x.then}</span>
+                          {d.lastName}: P{x.now} → <span className={x.delta > 0 ? 'text-positive' : 'text-accent-ink'}>P{x.then}</span>
                           <span className="font-normal text-muted"> через ~{x.h} кіл</span>
                         </div>
                         <div className="truncate text-xs text-muted">{x.reason}</div>
                       </div>
-                      <TrendingUp className={cn('h-5 w-5 shrink-0', x.delta > 0 ? 'text-emerald-500' : 'rotate-180 text-f1-red')} />
+                      <TrendingUp className={cn('h-5 w-5 shrink-0', x.delta > 0 ? 'text-positive' : 'rotate-180 text-accent-ink')} />
                     </motion.div>
                   );
                 })
@@ -195,7 +195,7 @@ export function LivePredictor({ round, demo }: Props) {
 
             {/* projected finish */}
             <div className="card p-4">
-              <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted">Прогноз фінішу</div>
+              <div className="mb-3 text-xs font-bold uppercase tracking-wider text-muted">Прогноз фінішу</div>
               <ol className="space-y-2">
                 {finishPodium.map((c, i) => (
                   <li key={c} className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export function LivePredictor({ round, demo }: Props) {
                   </li>
                 ))}
               </ol>
-              <div className="mt-3 text-[10px] text-muted">впевненість = запас часу до наступного суперника</div>
+              <div className="mt-3 text-xs text-muted">впевненість = запас часу до наступного суперника</div>
             </div>
           </div>
         </div>
@@ -245,7 +245,7 @@ function BumpChart({
 
   return (
     <div className="card p-3">
-      <div className="mb-1 flex items-center justify-between px-1 text-[11px] text-muted">
+      <div className="mb-1 flex items-center justify-between px-1 text-xs text-muted">
         <span className="font-bold uppercase tracking-wider">Позиції: факт і прогноз</span>
         <span className="flex items-center gap-3">
           <span className="flex items-center gap-1"><span className="h-0.5 w-5 bg-ink" />факт</span>
@@ -267,7 +267,7 @@ function BumpChart({
           </g>
         ))}
         <rect x={x(lap)} y={padT - 6} width={W - padR - x(lap)} height={H - padT - padB + 12} className="fill-violet-500/5" />
-        <line x1={x(lap)} x2={x(lap)} y1={padT - 6} y2={H - padB + 6} stroke="#e10600" strokeWidth={1.5} />
+        <line x1={x(lap)} x2={x(lap)} y1={padT - 6} y2={H - padB + 6} className="stroke-accent" strokeWidth={1.5} />
         <text x={x(lap)} y={H - 6} textAnchor="middle" fontSize={10} className="fill-current font-mono font-bold">
           зараз · L{lap}
         </text>
@@ -287,7 +287,7 @@ function BumpChart({
             <g key={c} clipPath={`url(#bump-${race.laps})`} opacity={dim ? 0.15 : 1} onMouseEnter={() => setHover(c)} onMouseLeave={() => setHover(null)} className="cursor-pointer transition-opacity">
               <polyline points={past.join(' ')} fill="none" stroke={color} strokeWidth={hover === c ? 3.5 : 2.2} strokeLinejoin="round" />
               <polyline points={fut.join(' ')} fill="none" stroke={color} strokeWidth={hover === c ? 3.5 : 2.2} strokeDasharray="5 4" strokeLinejoin="round" />
-              <circle cx={x(lap)} cy={y(race.pos[c][lap])} r={4} fill={color} stroke="white" strokeWidth={1.5} />
+              <circle cx={x(lap)} cy={y(race.pos[c][lap])} r={4} fill={color} className="stroke-surface" strokeWidth={1.5} />
               {endP <= SHOW && (
                 <text x={W - padR + 6} y={y(endP) + 4} fontSize={11} fontWeight={700} className="fill-current font-mono">
                   {c}

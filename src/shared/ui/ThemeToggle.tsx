@@ -1,7 +1,11 @@
-import { motion } from 'motion/react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../app/providers/ThemeProvider';
+import { cn } from '../lib/utils';
 
+/**
+ * Paper / night switch: two squares with a red block under the active one (slides on transform).
+ * The theme itself changes behind a kerb wipe that starts from this control (ThemeProvider).
+ */
 export function ThemeToggle() {
   const { theme, toggle } = useTheme();
   const dark = theme === 'dark';
@@ -12,24 +16,23 @@ export function ThemeToggle() {
       role="switch"
       aria-checked={dark}
       aria-label={dark ? 'Увімкнути світлу тему' : 'Увімкнути темну тему'}
+      title={dark ? 'Папір' : 'Ніч'}
       onClick={(e) => {
         const r = e.currentTarget.getBoundingClientRect();
         toggle({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
       }}
-      className="relative flex h-8 w-[60px] shrink-0 items-center rounded-full border border-line bg-surface-2 px-1 transition-colors hover:border-f1-red/60"
+      className="relative grid h-11 w-[80px] shrink-0 grid-cols-2 rounded-md border border-line bg-surface-2 p-[3px]"
     >
-      <Sun className="absolute left-2 h-3.5 w-3.5 text-muted" />
-      <Moon className="absolute right-2 h-3.5 w-3.5 text-muted" />
-      <motion.span
-        layout
-        transition={{ type: 'spring', stiffness: 600, damping: 32 }}
-        className="relative z-10 grid h-6 w-6 place-items-center rounded-full bg-f1-red text-white shadow-md"
-        style={{ marginLeft: dark ? 'auto' : 0 }}
-      >
-        <motion.span key={theme} initial={{ rotate: -90, scale: 0.4 }} animate={{ rotate: 0, scale: 1 }}>
-          {dark ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
-        </motion.span>
-      </motion.span>
+      <span
+        aria-hidden
+        className={cn('absolute inset-y-[3px] left-[3px] w-[calc(50%-3px)] rounded-[3px] bg-accent motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out', dark && 'translate-x-full')}
+      />
+      <span className={cn('relative grid place-items-center', dark ? 'text-muted' : 'text-on-accent')}>
+        <Sun className="h-4 w-4" aria-hidden />
+      </span>
+      <span className={cn('relative grid place-items-center', dark ? 'text-on-accent' : 'text-muted')}>
+        <Moon className="h-4 w-4" aria-hidden />
+      </span>
     </button>
   );
 }

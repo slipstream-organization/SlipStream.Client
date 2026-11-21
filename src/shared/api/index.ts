@@ -165,6 +165,8 @@ export const api = {
   race: (round: number) => delay(getRaceByRound(round)),
   result: (round: number) => delay(getResult(round)),
   news: () => delay(NEWS),
+  /** Full article by slug; null when it does not exist (the page shows a not-found state). */
+  newsArticle: (slug: string) => delay(NEWS.find((n) => n.slug === slug) ?? null),
   driverStandings: () => delay(computeStandings('drivers')),
   constructorStandings: () => delay(computeStandings('constructors')),
   bingo: () => delay(BINGO.map((c) => ({ ...c, done: !!c.free || (!!c.fulfilledRound && completedRaces().some((r) => r.round === c.fulfilledRound)) }))),

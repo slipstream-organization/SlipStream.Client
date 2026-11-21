@@ -8,6 +8,7 @@ import { REAL_LAPS } from '../../shared/mock/trackRecords';
 import { ME } from '../../shared/mock/profile';
 import { GAME, challengeCode, steamUri } from '../../shared/config/game';
 import { fadeUp, stagger } from '../../shared/ui/motion';
+import { Dialog } from '../../shared/ui/Dialog';
 import { saveLap } from '../../shared/lib/lapStore';
 import { TrackOutline } from '../../shared/ui/TrackOutline';
 import { cn, formatLapTime } from '../../shared/lib/utils';
@@ -32,9 +33,8 @@ export function PoleChallengeButton({ ev, className }: { ev: RaceEvent; classNam
       <motion.button
         type="button"
         onClick={() => setOpen(true)}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
-        className={cn('group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-f1-red px-5 py-3 text-sm font-black uppercase tracking-wider text-white shadow-lg shadow-f1-red/30', className)}
+        whileTap={{ y: 1 }}
+        className={cn('press group relative inline-flex min-h-11 items-center gap-2 overflow-hidden rounded-full bg-f1-red px-5 py-3 text-sm font-semibold uppercase tracking-wider text-on-accent', className)}
       >
         <span className="speed-stripes pointer-events-none absolute inset-0 opacity-30" />
         <Swords className="relative h-4 w-4 transition group-hover:rotate-12" />
@@ -42,17 +42,9 @@ export function PoleChallengeButton({ ev, className }: { ev: RaceEvent; classNam
       </motion.button>
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] grid place-items-center bg-black/85 p-4" onClick={() => setOpen(false)}>
-            <motion.div
-              initial={{ scale: 0.94, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.96, opacity: 0 }}
-              className="relative max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-line bg-surface"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ChallengeFlow ev={ev} onClose={() => setOpen(false)} />
-            </motion.div>
-          </motion.div>
+          <Dialog label="Виклик поулу" onClose={() => setOpen(false)} panelClassName="max-w-2xl">
+            <ChallengeFlow ev={ev} onClose={() => setOpen(false)} />
+          </Dialog>
         )}
       </AnimatePresence>
     </>
@@ -89,11 +81,11 @@ function ChallengeFlow({ ev, onClose }: { ev: RaceEvent; onClose: () => void }) 
         <button type="button" onClick={onClose} className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full bg-surface text-muted hover:text-ink" aria-label="Закрити">
           <X className="h-4 w-4" />
         </button>
-        <div className="relative text-xs font-bold uppercase tracking-[0.25em] text-f1-red">Pole challenge</div>
+        <div className="relative text-xs font-bold uppercase tracking-[0.25em] text-accent-ink">Pole challenge</div>
         <h2 className="display relative mt-1 text-3xl">{circuit?.name ?? ev.country}</h2>
         <div className="relative mt-4 flex items-end gap-6">
           <div>
-            <div className="text-[10px] uppercase tracking-widest text-muted">{target.label}</div>
+            <div className="text-xs uppercase tracking-widest text-muted">{target.label}</div>
             <div className="font-mono text-3xl font-bold">{formatLapTime(target.time)}</div>
           </div>
           <Stepper step={step} />
@@ -123,7 +115,7 @@ function Stepper({ step }: { step: Step }) {
       {STEPS.map((s, i) => (
         <div key={s} className="flex flex-col items-center gap-1">
           <span className={cn('h-1 w-14 rounded-full transition-colors', i <= at ? 'bg-f1-red' : 'bg-line')} />
-          <span className={cn('text-[10px] font-bold uppercase', i === at ? 'text-ink' : 'text-muted')}>{STEP_LABEL[s]}</span>
+          <span className={cn('text-xs font-bold uppercase', i === at ? 'text-ink' : 'text-muted')}>{STEP_LABEL[s]}</span>
         </div>
       ))}
     </div>
@@ -134,9 +126,9 @@ function GuideStep({ n, icon, title, last, children }: { n: number; icon: React.
   return (
     <motion.li variants={fadeUp} className={cn('relative flex gap-4', !last && 'pb-5')}>
       {!last && <span className="absolute bottom-0 left-5 top-11 w-px bg-line" />}
-      <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-f1-red">
+      <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-accent-ink">
         {icon}
-        <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-f1-red font-mono text-[9px] font-bold text-white">{n}</span>
+        <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-f1-red font-mono text-xs font-bold text-on-accent">{n}</span>
       </span>
       <div className="min-w-0 flex-1 pt-1">
         <div className="font-bold">{title}</div>
@@ -168,7 +160,7 @@ function Guide({ code, circuitName, onLaunch }: { code: string; circuitName: str
                 <Download className="h-3.5 w-3.5" /> Завантажити .exe
               </span>
             )}
-            <span className="font-mono text-[11px]">
+            <span className="font-mono text-xs">
               v{t.version} · Windows · {t.size}
             </span>
           </div>
@@ -177,7 +169,7 @@ function Guide({ code, circuitName, onLaunch }: { code: string; circuitName: str
           За кодом програма зрозуміє, до якого виклику прив&apos;язати коло.
           <button type="button" onClick={copy} className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-line bg-surface-2 px-3 py-2 font-mono text-lg font-bold tracking-widest text-ink transition hover:border-f1-red">
             {code}
-            {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4 text-muted" />}
+            {copied ? <Check className="h-4 w-4 text-positive" /> : <Copy className="h-4 w-4 text-muted" />}
           </button>
         </GuideStep>
         <GuideStep n={3} icon={<Gamepad2 className="h-4 w-4" />} title={`Steam відкриє ${GAME.gameName}`}>
@@ -188,7 +180,7 @@ function Guide({ code, circuitName, onLaunch }: { code: string; circuitName: str
         </GuideStep>
       </motion.ol>
 
-      <button type="button" onClick={onLaunch} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-f1-red py-3.5 font-black uppercase tracking-wider text-white transition hover:brightness-110">
+      <button type="button" onClick={onLaunch} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-f1-red py-3.5 font-black uppercase tracking-wider text-on-accent transition hover:brightness-110">
         <Gamepad2 className="h-4 w-4" /> Запустити гру в Steam
       </button>
       {!GAME.launchEnabled && <p className="mt-2 text-center text-xs text-muted">Поки що Steam не відкривається, бо гру ще не під&apos;єднали. Можна пройти демо-заїзд.</p>}
@@ -223,13 +215,13 @@ function Driving({ target, code, onLap, onBack }: { target: number; code: string
 
   return (
     <div className="text-center">
-      <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-f1-red/10 text-f1-red">
+      <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-f1-red/10 text-accent-ink">
         {demo ? <span className="pulse-dot h-3 w-3 rounded-full bg-f1-red" /> : <Loader2 className="h-7 w-7 animate-spin" />}
       </div>
       <div className="mt-3 font-bold">{demo ? 'Коло в процесі…' : 'Чекаємо на коло'}</div>
       <div className="mt-1 text-sm text-muted">Після фінішу SlipStream Telemetry надішле час, і він запишеться в профіль.</div>
 
-      <div className="mx-auto mt-4 flex max-w-sm justify-center gap-2 font-mono text-[11px]">
+      <div className="mx-auto mt-4 flex max-w-sm justify-center gap-2 font-mono text-xs">
         <Status ok={!!demo} label={demo ? 'Телеметрія: є сигнал' : 'Телеметрія: очікування'} />
         <span className="rounded-full bg-surface-2 px-2.5 py-1 text-muted">код {code}</span>
       </div>
@@ -240,7 +232,7 @@ function Driving({ target, code, onLap, onBack }: { target: number; code: string
       </div>
       {!demo && (
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button type="button" onClick={runDemo} className="rounded-xl border border-dashed border-line px-5 py-2.5 text-sm font-bold text-muted transition hover:border-f1-red hover:text-f1-red">
+          <button type="button" onClick={runDemo} className="rounded-xl border border-dashed border-line px-5 py-2.5 text-sm font-bold text-muted transition hover:border-f1-red hover:text-accent-ink">
             Демо: симулювати заїзд
           </button>
           <button type="button" onClick={onBack} className="rounded-xl px-4 py-2.5 text-sm font-bold text-muted hover:text-ink">
@@ -254,7 +246,7 @@ function Driving({ target, code, onLap, onBack }: { target: number; code: string
 
 function Status({ ok, label }: { ok: boolean; label: string }) {
   return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1', ok ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-amber-400/15 text-amber-700 dark:text-amber-300')}>
+    <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1', ok ? 'bg-emerald-500/15 text-emerald-600 dark:text-positive' : 'bg-amber-400/15 text-amber-700 dark:text-amber-300')}>
       <span className={cn('h-1.5 w-1.5 rounded-full', ok ? 'bg-emerald-500' : 'animate-pulse bg-amber-400')} />
       {label}
     </span>
@@ -269,24 +261,24 @@ function Result({ outcome, target, onRetry, onClose }: { outcome: Outcome; targe
     <div>
       <div className="flex flex-wrap items-center gap-2">
         {outcome.pb && (
-          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="inline-flex items-center gap-1 rounded-full bg-violet-500 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-white">
+          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="inline-flex items-center gap-1 rounded-full bg-violet-500 px-2.5 py-1 text-xs font-black uppercase tracking-wider text-white">
             <Trophy className="h-3 w-3" /> Особистий рекорд
           </motion.span>
         )}
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-bold text-emerald-600 dark:text-positive">
           <CheckCircle2 className="h-3 w-3" /> {outcome.pb ? 'Збережено в профіль' : 'Спробу зараховано'}
         </span>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-4">
         <div>
-          <div className="text-[10px] uppercase tracking-widest text-muted">Твоє коло</div>
+          <div className="text-xs uppercase tracking-widest text-muted">Твоє коло</div>
           <div className="font-mono text-4xl font-bold">{formatLapTime(outcome.lapTime)}</div>
           {outcome.previous && !outcome.pb && <div className="font-mono text-xs text-muted">рекорд {formatLapTime(outcome.previous)}</div>}
-          {outcome.previous && outcome.pb && <div className="font-mono text-xs text-emerald-500">−{(outcome.previous - outcome.lapTime).toFixed(3)} до попереднього</div>}
+          {outcome.previous && outcome.pb && <div className="font-mono text-xs text-positive">−{(outcome.previous - outcome.lapTime).toFixed(3)} до попереднього</div>}
         </div>
         <div>
-          <div className="text-[10px] uppercase tracking-widest text-muted">До поулу</div>
-          <div className={cn('font-mono text-4xl font-bold', beat ? 'text-emerald-500' : pct < 3 ? 'text-amber-500' : 'text-orange-500')}>
+          <div className="text-xs uppercase tracking-widest text-muted">До поулу</div>
+          <div className={cn('font-mono text-4xl font-bold', beat ? 'text-positive' : pct < 3 ? 'text-amber-500' : 'text-orange-500')}>
             {beat ? '−' : '+'}
             {Math.abs(delta).toFixed(3)}
           </div>
@@ -302,12 +294,12 @@ function Result({ outcome, target, onRetry, onClose }: { outcome: Outcome; targe
           className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface bg-ink"
         />
       </div>
-      <div className="mt-1 flex justify-between font-mono text-[10px] text-muted">
+      <div className="mt-1 flex justify-between font-mono text-xs text-muted">
         <span>поул</span>
         <span>+5%</span>
       </div>
       <div className="mt-6 flex flex-wrap gap-2">
-        <Link to="/profile" onClick={onClose} className="flex-1 rounded-xl bg-f1-red py-3 text-center font-black uppercase tracking-wider text-white hover:brightness-110">
+        <Link to="/profile" onClick={onClose} className="flex-1 rounded-xl bg-f1-red py-3 text-center font-black uppercase tracking-wider text-on-accent hover:brightness-110">
           Дивитись у профілі
         </Link>
         <button type="button" onClick={onRetry} className="rounded-xl border border-line px-4 py-3 text-sm font-bold hover:bg-surface-2">

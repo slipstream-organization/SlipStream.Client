@@ -56,7 +56,7 @@ export function TrackOutline({ circuitId, className, strokeWidth = 2.5, animateD
         />
       )}
       {runner && (
-        <circle r="2.2" fill="#e10600">
+        <circle r="2.2" className="fill-accent">
           <animateMotion dur={`${runnerDuration}s`} repeatCount="indefinite" rotate="auto">
             <mpath href={`#trk-${id}`} />
           </animateMotion>

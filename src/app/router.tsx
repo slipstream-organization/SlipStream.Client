@@ -12,6 +12,7 @@ import { ChampionshipPage } from '../pages/championship/ChampionshipPage';
 import { LoginPage } from '../pages/login/LoginPage';
 import { AuthCallbackPage } from '../pages/auth/AuthCallbackPage';
 import { RequireAuth } from './RequireAuth';
+import { ArticlePage } from '../pages/news/ArticlePage';
 
 export const router = createBrowserRouter([
   {
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: 'news/:slug', element: <ArticlePage /> },
       { path: 'races', element: <SchedulePage /> },
       { path: 'races/:round', element: <RacePage /> },
       { path: 'standings', element: <StandingsPage /> },

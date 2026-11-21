@@ -26,8 +26,8 @@ export function CountUp({ value, className }: { value: number; className?: strin
 export function Stat({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: number; accent?: boolean }) {
   return (
     <div className={cn('rounded-lg border border-line bg-surface p-3', accent && 'border-f1-red/40 bg-f1-red/5')}>
-      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
-        <span className="text-f1-red">{icon}</span>
+      <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
+        <span className="text-accent-ink">{icon}</span>
         {label}
       </div>
       <CountUp value={value} className="display mt-1 block text-2xl md:text-3xl" />
@@ -41,13 +41,13 @@ export function BestYearCard({ year, position, color, label = "Найкращи�
     <div className="mt-4 flex items-center gap-4 rounded-lg p-4 text-black" style={{ background: `linear-gradient(110deg, ${color}, ${color}88)` }}>
       <Award className="h-8 w-8 shrink-0 opacity-70" />
       <div className="flex-1">
-        <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60">{label}</div>
+        <div className="text-xs font-bold uppercase tracking-[0.2em] text-black/60">{label}</div>
         <div className="display text-3xl">{position ? year : 'Дебютний сезон'}</div>
       </div>
       {position > 0 && (
         <div className="text-right">
           <div className="display text-3xl">P{position}</div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-black/60">{position === 1 ? 'чемпіон' : 'у чемпіонаті'}</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-black/60">{position === 1 ? 'чемпіон' : 'у чемпіонаті'}</div>
         </div>
       )}
     </div>

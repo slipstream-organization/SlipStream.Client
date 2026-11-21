@@ -9,7 +9,7 @@ export function LapSimulator(props: LapSimulatorProps) {
   return (
     <Suspense
       fallback={
-        <div className="grid aspect-[4/5] w-full place-items-center rounded-xl bg-[#26282d] sm:aspect-video">
+        <div className="grid aspect-[4/5] w-full place-items-center rounded-xl bg-surface-2 sm:aspect-video">
           <Loader />
         </div>
       }

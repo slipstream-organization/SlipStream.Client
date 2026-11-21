@@ -7,7 +7,10 @@ import { useData } from '../../shared/lib/useData';
 import { driverPhoto } from '../../shared/lib/media';
 import { DRIVER_BY_CODE, SEASON, TEAM_BY_ID } from '../../shared/mock/season';
 import type { StandingRow, StandingsHistory } from '../../shared/model/types';
-import { DriverBadge, Loader, Segmented } from '../../shared/ui/atoms';
+import { DriverBadge, Segmented } from '../../shared/ui/atoms';
+import { Skeleton } from '../../shared/ui/Skeleton';
+import { StateBlock } from '../../shared/ui/StateBlock';
+import { Button } from '../../shared/ui/Button';
 import { cn } from '../../shared/lib/utils';
 import { MAX_PER_RACE, titleForecast, titleMaths, type TitleChance, type TitleMaths } from '../../widgets/title-race/titleModel';
 
@@ -17,12 +20,12 @@ const OUT_GREY = '#8a8d94';
 
 export function ChampionshipPage() {
   const [tab, setTab] = useState<Tab>('maths');
-  const { data } = useData(api.driverStandings);
+  const { data, error, reload } = useData(api.driverStandings);
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-10 md:px-6">
       <div className="mb-8">
-        <div className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-f1-red">{SEASON} Title fight</div>
+        <div className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-accent-ink">{SEASON} Title fight</div>
         <h1 className="display text-5xl md:text-7xl">Битва за титул</h1>
       </div>
 
@@ -39,7 +42,7 @@ export function ChampionshipPage() {
       </div>
 
       {!data ? (
-        <Loader />
+        error ? <StateBlock kind="error" title="Не вдалося завантажити дані чемпіонату" description="Перевірте з'єднання й повторіть спробу." action={<Button onClick={reload}>Спробувати ще раз</Button>} /> : <div role="status" aria-busy="true" aria-label="Завантаження" className="space-y-4"><Skeleton className="h-24" /><Skeleton className="h-72" /></div>
       ) : (
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
@@ -112,8 +115,8 @@ function ClinchNote({ m, table }: { m: TitleMaths; table: StandingRow[] }) {
           : `${name} оформить титул уже в ${next.country}, якщо втратить на ${rival} не більше ${-need} ${-need === 1 ? 'очка' : 'очок'} (потрібен відрив ${m.clinchLead}+ після гонки).`;
   }
   return (
-    <div className="mb-8 flex items-start gap-3 rounded-[14px] border border-line bg-surface p-4 text-sm">
-      <Crown className="mt-0.5 h-4 w-4 shrink-0 text-f1-red" />
+    <div className="mb-8 flex items-start gap-3 rounded-lg border border-line bg-surface p-4 text-sm">
+      <Crown className="mt-0.5 h-4 w-4 shrink-0 text-accent-ink" />
       <span>{text}</span>
     </div>
   );
@@ -151,28 +154,28 @@ function ChanceCard({ d, m, scale, delay, small }: { d: TitleChance; m: TitleMat
             loading="lazy"
             onError={(e) => (e.currentTarget.style.display = 'none')}
             className={cn(
-              'pointer-events-none absolute bottom-0 left-1/2 h-[105%] -translate-x-1/2 object-contain object-bottom drop-shadow-[0_8px_16px_rgba(0,0,0,0.3)] transition duration-500',
-              out ? 'opacity-75 brightness-90 grayscale' : 'group-hover:scale-[1.03]',
+              'pointer-events-none absolute bottom-0 left-1/2 h-[105%] -translate-x-1/2 object-contain object-bottom drop-shadow-[0_8px_16px_rgba(0,0,0,0.3)] transition duration-300',
+              out ? 'opacity-75 brightness-90 grayscale' : 'group-',
             )}
           />
-          <span className="absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 font-mono text-[10px] font-bold text-white backdrop-blur">P{d.position}</span>
+          <span className="absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 font-mono text-xs font-bold text-white">P{d.position}</span>
           {d.status === 'champion' && (
-            <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-[#D4AF37] px-2 py-0.5 text-[10px] font-black uppercase text-black">
+            <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-[#D4AF37] px-2 py-0.5 text-xs font-black uppercase text-black">
               <Crown className="h-3 w-3" /> Champion
             </span>
           )}
-          {out && <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/80">Out</span>}
+          {out && <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white/80">Out</span>}
         </div>
         <div className={cn('space-y-2', small ? 'p-2.5' : 'p-3')}>
           <div className="flex items-baseline justify-between gap-2">
             <div className="min-w-0">
               <div className={cn('truncate font-bold uppercase', small ? 'text-xs' : 'text-sm', out && 'text-muted')}>{driver.lastName}</div>
-              <div className="truncate text-[11px] text-muted">{team.name}</div>
+              <div className="truncate text-xs text-muted">{team.name}</div>
             </div>
             <span className={cn('font-mono font-bold', small ? 'text-base' : 'text-xl', out && 'text-muted')}>{d.points}</span>
           </div>
           <ReachBar points={d.points} max={d.maxPoints} leader={m.leader.points} scale={scale} color={color} out={out} />
-          <div className={cn('text-[11px] leading-snug', out ? 'text-muted' : 'text-ink/80')}>{note}</div>
+          <div className={cn('text-xs leading-snug', out ? 'text-muted' : 'text-ink/80')}>{note}</div>
         </div>
       </Link>
     </motion.div>
@@ -218,7 +221,7 @@ function ForecastView({ table, history }: { table: StandingRow[]; history: Stand
     <>
       <div className="mb-6 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         {/* favourite */}
-        <div className="relative overflow-hidden rounded-[14px] p-6 text-black" style={{ background: `linear-gradient(110deg, ${favColor}, ${favColor}aa 60%, ${favColor}55)` }}>
+        <div className="relative overflow-hidden rounded-lg p-6 text-black" style={{ background: `linear-gradient(110deg, ${favColor}, ${favColor}aa 60%, ${favColor}55)` }}>
           <img
             src={driverPhoto(fav.code, '4col')}
             alt=""
@@ -263,7 +266,7 @@ function ForecastView({ table, history }: { table: StandingRow[]; history: Stand
               </div>
             ))}
           </div>
-          <p className="mt-4 text-[11px] text-muted">Остання гонка включає випадки, коли все вирішується у фіналі.</p>
+          <p className="mt-4 text-xs text-muted">Остання гонка включає випадки, коли все вирішується у фіналі.</p>
         </div>
       </div>
 
@@ -294,7 +297,7 @@ function ForecastView({ table, history }: { table: StandingRow[]; history: Stand
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[560px] text-sm">
           <thead>
-            <tr className="border-b border-line text-left text-[11px] uppercase tracking-wider text-muted">
+            <tr className="border-b border-line text-left text-xs uppercase tracking-wider text-muted">
               <th className="px-4 py-3 font-bold">Поз</th>
               <th className="px-2 py-3 font-bold">Пілот</th>
               <th className="px-2 py-3 text-right font-bold">Зараз</th>
@@ -313,7 +316,7 @@ function ForecastView({ table, history }: { table: StandingRow[]; history: Stand
                 <tr key={d.code} className={cn('border-b border-line/60 last:border-0', out && 'text-muted')}>
                   <td className="px-4 py-2.5 font-mono font-bold">
                     {i + 1}
-                    {move !== 0 && <span className={cn('ml-1 text-[10px]', move > 0 ? 'text-green-500' : 'text-f1-red')}>{move > 0 ? `▲${move}` : `▼${-move}`}</span>}
+                    {move !== 0 && <span className={cn('ml-1 text-xs', move > 0 ? 'text-green-500' : 'text-accent-ink')}>{move > 0 ? `▲${move}` : `▼${-move}`}</span>}
                   </td>
                   <td className="px-2 py-2.5">
                     <div className="flex items-center gap-2.5">
@@ -354,9 +357,9 @@ function formatChance(p: number, open = false) {
 function Stat({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
   return (
     <div className="card p-4">
-      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">{label}</div>
+      <div className="text-xs font-bold uppercase tracking-[0.18em] text-muted">{label}</div>
       <div className="display mt-1 text-3xl">{value}</div>
-      {hint && <div className="text-[11px] text-muted">{hint}</div>}
+      {hint && <div className="text-xs text-muted">{hint}</div>}
     </div>
   );
 }

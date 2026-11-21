@@ -7,20 +7,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;0,900;1,700;1,900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Science+Gothic:slnt,wdth,wght@-10..0,50..200,400..700&family=Golos+Text:wght@400..700&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..700&family=Martian+Mono:wdth,wght@75..112.5,400..700&display=swap"
       rel="stylesheet"
     />
+    <meta name="color-scheme" content="light dark" />
     <title>SlipStream — F1 hub</title>
     <script>
       // Apply the saved theme before first paint to avoid a flash
       try {
         var t = localStorage.getItem('slipstream-theme');
-        if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        if (!t) t = 'light'; // paper is the default; dark is an explicit choice
         if (t === 'dark') document.documentElement.classList.add('dark');
       } catch (e) {
-        document.documentElement.classList.add('dark');
+        /* storage unavailable: stay on paper */
       }
     </script>
+    <!-- canvas colour before the app stylesheet arrives (mirrors --c-bg / --c-ink) -->
+    <style>
+      html { background: #f3f3ef; color: #101114; }
+      html.dark { background: #0e1013; color: #f4f4f1; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
