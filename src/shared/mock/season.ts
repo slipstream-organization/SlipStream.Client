@@ -105,9 +105,21 @@ function at(dateIso: string, dayOffset: number, localHour: number, tz: number) {
   return d.toISOString();
 }
 
+/** Sprint weekends of 2026 (mock; the API sends `sprint` and the SQ / SPRINT sessions). */
+const SPRINT_ROUNDS = new Set([2, 4, 5, 9, 12, 16]);
+
 function buildSessions(s: CalendarSeed): Session[] {
   if (s.testing) return [];
   const raceHour = s.raceHour ?? 15;
+  if (SPRINT_ROUNDS.has(s.round)) {
+    return [
+      { kind: 'FP1', start: at(s.start, 0, 12.5, s.tz) },
+      { kind: 'SQ', start: at(s.start, 0, 16.5, s.tz) },
+      { kind: 'SPRINT', start: at(s.start, 1, 12, s.tz) },
+      { kind: 'QUALI', start: at(s.start, 1, 16, s.tz) },
+      { kind: 'RACE', start: at(s.end, 0, raceHour, s.tz) },
+    ];
+  }
   // start = day 0 (Fri for normal weekends, Thu for Saturday races)
   return [
     { kind: 'FP1', start: at(s.start, 0, 12.5, s.tz) },
@@ -133,6 +145,7 @@ export const CALENDAR: RaceEvent[] = SEEDS.map((s) => ({
   poleLapTime: REAL_LAPS[s.circuitId] ? Math.round((REAL_LAPS[s.circuitId].pole.lapTime + 0.6) * 1000) / 1000 : s.pole,
   sessions: buildSessions(s),
   testing: s.testing,
+  sprint: SPRINT_ROUNDS.has(s.round) || undefined,
 }));
 
 export const RACES = CALENDAR.filter((e) => !e.testing);

@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowLeft, Box, Clapperboard, Film, Play, Target, Timer, Zap } from 'lucide-react';
+import { ArrowLeft, Box, Clapperboard, Film, Play, Target, Timer } from 'lucide-react';
 import { api, isCompleted, raceStart } from '../../shared/api';
 import { useData } from '../../shared/lib/useData';
 import { DRIVER_BY_CODE, SEASON, TEAM_BY_ID } from '../../shared/mock/season';
 import { HIGHLIGHTS } from '../../shared/mock/content';
-import type { RaceEvent, RaceWeekendResult, SessionKind } from '../../shared/model/types';
+import type { RaceEvent, RaceReport, RaceWeekendResult, SessionKind } from '../../shared/model/types';
+import { FocusProvider } from '../../widgets/race-report/focus';
+import { circuitTransition } from '../../widgets/season/model';
+import { ReportHero } from '../../widgets/race-report/ReportHero';
+import { ReportPodium } from '../../widgets/race-report/ReportPodium';
+import { Classification } from '../../widgets/race-report/Classification';
 import { DriverBadge, Flag, Loader, Segmented } from '../../shared/ui/atoms';
 import { fadeUp, stagger } from '../../shared/ui/motion';
 import { TrackOutline } from '../../shared/ui/TrackOutline';
@@ -25,6 +30,7 @@ export function RacePage() {
   const round = Number(useParams().round);
   const race = useData(() => api.race(round), [round]);
   const result = useData(() => api.result(round), [round]);
+  const report = useData(() => api.raceReport(round), [round]);
 
   if (race.loading) return <Loader className="py-40" />;
   if (!race.data) return <div className="py-40 text-center text-muted">Етап не знайдено</div>;
@@ -32,11 +38,24 @@ export function RacePage() {
   const ev = race.data;
   const done = isCompleted(ev);
 
+  // a finished race: the post-race report (variant B — the race in one picture)
+  if (done && result.data && report.data) {
+    return (
+      <FocusProvider>
+        <ReportHero ev={ev} result={result.data} report={report.data} />
+        <div className="mx-auto mt-10 flex max-w-7xl flex-col gap-14 px-4 md:px-6">
+          <CompletedWeekend ev={ev} result={result.data} report={report.data} />
+        </div>
+      </FocusProvider>
+    );
+  }
+  if (done) return <Loader className="py-40" />;
+
   return (
     <div>
       <RaceHero ev={ev} />
       <div className="mx-auto mt-10 flex max-w-7xl flex-col gap-10 px-4 md:px-6">
-        {done && result.data ? <CompletedWeekend ev={ev} result={result.data} /> : !done ? <UpcomingWeekend ev={ev} /> : <Loader />}
+        <UpcomingWeekend ev={ev} />
       </div>
     </div>
   );
@@ -46,7 +65,7 @@ function RaceHero({ ev }: { ev: RaceEvent }) {
   const c = CIRCUITS[ev.circuitId];
   return (
     <section className="relative overflow-hidden border-b border-line bg-surface">
-      <div className="pointer-events-none absolute -right-10 -top-10 h-[130%] w-[50%] opacity-[0.07]">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-[130%] w-[50%] opacity-[0.07]" style={circuitTransition(ev.round)}>
         <TrackOutline circuitId={ev.circuitId} className="h-full w-full text-ink" strokeWidth={6} />
       </div>
       <div className="relative mx-auto max-w-7xl px-4 py-10 md:px-6">
@@ -161,17 +180,16 @@ function VideoPlaceholder({ title, circuitId, duration, small }: { title: string
 
 type ResultTab = 'race' | 'quali' | 'grid';
 
-function CompletedWeekend({ ev, result }: { ev: RaceEvent; result: RaceWeekendResult }) {
+function CompletedWeekend({ ev, result, report }: { ev: RaceEvent; result: RaceWeekendResult; report: RaceReport }) {
   const [tab, setTab] = useState<ResultTab>('race');
   const pole = result.qualifying[0];
 
   return (
     <>
-      <Podium result={result} />
-      <MediaPanel ev={ev} lapTime={result.poleTime} driverCode={pole.driverCode} />
+      <ReportPodium result={result} />
       <section>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="display text-3xl">Результати</h2>
+          <h2 className="display text-3xl">Класифікація</h2>
           <Segmented
             layoutKey="results"
             value={tab}
@@ -185,40 +203,14 @@ function CompletedWeekend({ ev, result }: { ev: RaceEvent; result: RaceWeekendRe
         </div>
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-            {tab === 'race' && <RaceTable result={result} />}
+            {tab === 'race' && <Classification result={result} report={report} />}
             {tab === 'quali' && <QualiTable result={result} />}
             {tab === 'grid' && <StartingGrid result={result} />}
           </motion.div>
         </AnimatePresence>
       </section>
+      <MediaPanel ev={ev} lapTime={result.poleTime} driverCode={pole.driverCode} />
     </>
-  );
-}
-
-function Podium({ result }: { result: RaceWeekendResult }) {
-  const [p1, p2, p3] = result.race;
-  const order = [p2, p1, p3];
-  const heights = ['h-28', 'h-40', 'h-20'];
-  return (
-    <section className="grid grid-cols-3 items-end gap-3 md:mx-auto md:w-[640px]">
-      {order.map((r, i) => {
-        const d = DRIVER_BY_CODE[r.driverCode];
-        const team = TEAM_BY_ID[d.teamId];
-        return (
-          <motion.div key={r.driverCode} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: [0.25, 0, 0.45][i], duration: 0.2, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center text-center">
-            <Link to={`/drivers/${r.driverCode}`} className="flex flex-col items-center transition hover:-translate-y-1">
-            <DriverBadge code={r.driverCode} size={i === 1 ? 72 : 56} />
-            <div className="mt-2 text-xs text-muted">{d.firstName}</div>
-            <div className="display text-xl md:text-2xl">{d.lastName}</div>
-            <div className="font-mono text-xs text-muted">{r.time}</div>
-            </Link>
-            <div className={cn('mt-3 flex w-full items-start justify-center rounded-t-lg pt-2', heights[i])} style={{ background: `linear-gradient(to bottom, ${team.color}, ${team.color}22)` }}>
-              <span className="display text-4xl text-black/70">{r.position}</span>
-            </div>
-          </motion.div>
-        );
-      })}
-    </section>
   );
 }
 
@@ -241,52 +233,6 @@ function DriverCell({ code }: { code: string }) {
 }
 
 const rowAnim = (i: number) => ({ initial: { opacity: 0, x: -12 }, animate: { opacity: 1, x: 0 }, transition: { delay: i * 0.025 } });
-
-function RaceTable({ result }: { result: RaceWeekendResult }) {
-  return (
-    <div className="card overflow-x-auto">
-      <table className="w-full min-w-[620px] text-sm">
-        <thead>
-          <tr className="border-b border-line text-left text-xs uppercase tracking-wider text-muted">
-            <th className="w-14 px-4 py-3">Поз</th>
-            <th className="px-4 py-3">Пілот</th>
-            <th className="px-4 py-3 text-center">Старт</th>
-            <th className="px-4 py-3 text-center">Кола</th>
-            <th className="px-4 py-3">Час / відрив</th>
-            <th className="px-4 py-3 text-right">Очки</th>
-          </tr>
-        </thead>
-        <tbody>
-          {result.race.map((r, i) => {
-            const gained = r.position ? r.grid - r.position : 0;
-            return (
-              <motion.tr key={r.driverCode} {...rowAnim(i)} className="border-b border-line/60 transition-colors last:border-0 hover:bg-surface-2">
-                <td className="px-4 py-2.5 font-mono font-bold">{r.position ?? <span className="text-accent-ink">DNF</span>}</td>
-                <td className="px-4 py-2.5">
-                  <DriverCell code={r.driverCode} />
-                </td>
-                <td className="px-4 py-2.5 text-center font-mono">
-                  {r.grid}
-                  {r.position && gained !== 0 && <span className={cn('ml-1 text-xs', gained > 0 ? 'text-positive' : 'text-accent-ink')}>{gained > 0 ? `▲${gained}` : `▼${-gained}`}</span>}
-                </td>
-                <td className="px-4 py-2.5 text-center font-mono">{r.laps}</td>
-                <td className="px-4 py-2.5 font-mono">
-                  {r.time}
-                  {r.fastestLap && (
-                    <span className="ml-2 inline-flex items-center gap-1 rounded bg-purple-600 px-1.5 py-0.5 text-xs font-bold text-white">
-                      <Zap className="h-3 w-3" /> FL
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-2.5 text-right font-mono font-bold">{r.points || ''}</td>
-              </motion.tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
 function QualiTable({ result }: { result: RaceWeekendResult }) {
   return (

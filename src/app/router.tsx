@@ -28,6 +28,7 @@ export const router = createBrowserRouter([
       { path: 'drivers/:code', element: <DriverPage /> },
       { path: 'game', element: <GamePage /> },
       { path: 'profile', element: <RequireAuth><ProfilePage /></RequireAuth> },
+      { path: 'lab/lap-3d', lazy: async () => ({ Component: (await import('../pages/lab/Lap3DPage')).Lap3DPage }) },
       { path: 'login', element: <LoginPage /> },
       { path: 'auth/callback', element: <AuthCallbackPage /> },
       { path: '*', element: <NotFound /> },

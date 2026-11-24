@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "models:optimize": "node scripts/optimize-models.mjs",
-    "models:inspect": "gltf-transform inspect"
+    "models:inspect": "gltf-transform inspect",
+    "tracks:fetch": "node scripts/tracks-fetch.mjs",
+    "tracks:osm": "node scripts/tracks-osm.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.8.2",

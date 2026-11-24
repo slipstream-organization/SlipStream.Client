@@ -42,6 +42,8 @@ export interface RaceEvent {
   poleLapTime: number; // seconds, reference value used for the lap simulation
   sessions: Session[];
   testing?: boolean;
+  /** sprint weekend: FP1 → sprint qualifying → sprint → qualifying → race */
+  sprint?: boolean;
 }
 
 export interface RaceResultRow {
@@ -205,4 +207,59 @@ export interface DriverMedia {
   cutout?: string;
   /** real photos of the driver for the biography carousel, in display order */
   photos: MediaImage[];
+}
+
+/* ── Race report (GET /v1/seasons/{year}/events/{round}/race-report) ───────────────────────── */
+
+/** Pirelli: S/M/H slicks, I = intermediate, W = full wet. */
+export type TyreCompound = 'S' | 'M' | 'H' | 'I' | 'W';
+
+export interface Stint {
+  driverCode: string;
+  compound: TyreCompound;
+  /** first and last lap of the stint, inclusive */
+  fromLap: number;
+  toLap: number;
+}
+
+export interface PitStop {
+  driverCode: string;
+  lap: number;
+  /** stationary time, seconds */
+  stationary: number;
+  /** time lost in the pit lane, seconds */
+  pitLane: number;
+}
+
+export type RaceMomentKind = 'start' | 'lead' | 'sc' | 'vsc' | 'red' | 'pit' | 'dnf' | 'fastest' | 'finish';
+
+export interface RaceMoment {
+  lap: number;
+  kind: RaceMomentKind;
+  text: string;
+  driverCode?: string;
+  /** neutralisations: last lap under SC / VSC */
+  endLap?: number;
+}
+
+export interface RaceReport {
+  round: number;
+  laps: number;
+  winnerTime: string;
+  weather: { air: number; track: number; humidity: number; wind: number; rainChance: number };
+  /** position after each lap; index 0 = grid. null = not running (retired) */
+  positions: Record<string, (number | null)[]>;
+  /** gap to the leader after each lap, seconds; index 0 = 0. null = retired or a lap down */
+  gaps: Record<string, (number | null)[]>;
+  /** lap times, index 0 = lap 1 */
+  lapTimes: Record<string, number[]>;
+  stints: Stint[];
+  pitStops: PitStop[];
+  neutralisations: { kind: 'sc' | 'vsc'; fromLap: number; toLap: number }[];
+  fastestLaps: { driverCode: string; time: number; lap: number }[];
+  speedTrap: { driverCode: string; kmh: number }[];
+  moments: RaceMoment[];
+  dnfReasons: Record<string, string>;
+  driverOfDay: { driverCode: string; share: number };
+  bestPitStop: PitStop;
 }

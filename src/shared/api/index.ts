@@ -4,6 +4,7 @@
  */
 import type { ArticleContext, DriverFacts, DriverMedia, NewsItem, RaceEvent, StandingRow, StandingsHistory, TeamFacts, TeamId } from '../model/types';
 import { DRIVER_PHOTOS } from '../mock/driverMedia';
+import { raceReport } from '../mock/raceReport';
 import { driverCutout } from '../lib/media';
 import { CALENDAR, DRIVERS, DRIVER_BY_CODE, RACES, TEAMS, TEAM_BY_ID, isCompleted, raceStart } from '../mock/season';
 import { ARTICLES, UA_NAMES } from '../mock/articles';
@@ -256,6 +257,7 @@ export const api = {
   lastRace: () => delay(getLastRace()),
   race: (round: number) => delay(getRaceByRound(round)),
   result: (round: number) => delay(getResult(round)),
+  raceReport: (round: number) => delay(raceReport(round)),
   news: () => delay(NEWS),
   /** Full article by slug; null when it does not exist (the page shows a not-found state). */
   newsArticle: (slug: string) => delay(buildArticle(slug)),
